@@ -27,10 +27,10 @@ const HeroSection = () => {
     });
   });
 
-  // const handleScrollToPengaduan = (e) => {
-  //   e.preventDefault(); 
-  //   lenis.scrollTo('#pengaduan', { duration: 2 }); 
-  // };
+  const handleScrollToPengaduan = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    lenis?.scrollTo('#pengaduan', { duration: 1.2 });
+  };
 
   return (
     <section id="hero" className="relative h-screen w-full flex items-center justify-center text-center text-white">
@@ -54,7 +54,7 @@ const HeroSection = () => {
         </p>
         <a
           href="#pengaduan"
-          // onClick={handleScrollToPengaduan} 
+          onClick={handleScrollToPengaduan} 
           className="mt-9 inline-flex items-center rounded-full border border-gray-300 px-6 py-3 text-sm font-semibold text-gray-200 shadow-sm hover:bg-white hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 transition-colors duration-300 hero-button"
         >
           <ChevronsDown className="mr-2 h-4 w-4" /> 
