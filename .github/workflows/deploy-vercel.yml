@@ -1,7 +1,6 @@
 name: CD - Deploy to Vercel
 
 on:
-  # Hanya jalankan saat ada push ke branch main
   push:
     branches: [ main ]
 
@@ -10,18 +9,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Langkah 1: Checkout kode
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Langkah 2: Deploy ke Vercel
-      # Menggunakan GitHub Action yang populer untuk deploy Vercel
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25 # Anda bisa cek versi terbarunya
+        uses: amondnet/vercel-action@v25 
         with:
-          # Tiga 'secrets' ini WAJIB di-set di pengaturan GitHub
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          # Menandakan ini adalah deploy ke production
-          vercel-prod: true

@@ -1,0 +1,16 @@
+# Dependency directories
+node_modules
+
+# Next.js build output
+.next
+
+# Docker files
+Dockerfile
+docker-compose.yml
+
+# Git files
+.git
+.gitignore
+
+# Environment variables
+.env.local
