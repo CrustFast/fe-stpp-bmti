@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -6,13 +8,14 @@ import gsap from 'gsap';
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPastMain, setIsPastMain] = useState(false);
-  const [isInPengaduan, setIsInPengaduan] = useState(false);
+  const [isInBlueZone, setIsInBlueZone] = useState(false); 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
+    const blueZoneIds = ['pengaduan', 'panduan', 'cekStatus', 'manfaat'];
+
     const handleScroll = () => {
       const scrollTop = window.scrollY;
-
       setIsScrolled(scrollTop > 20);
 
       const mainRect = document.getElementById('main-content')?.getBoundingClientRect();
@@ -20,33 +23,41 @@ const Navbar: React.FC = () => {
         setIsPastMain(mainRect.bottom <= 0);
       }
 
-      const pengaduanRect = document.getElementById('pengaduan')?.getBoundingClientRect();
-      if (pengaduanRect) {
-        setIsInPengaduan(pengaduanRect.top <= 0 && pengaduanRect.bottom >= 0);
+      let inBlue = false;
+      for (const id of blueZoneIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 100 && rect.bottom >= 100) {
+            inBlue = true;
+            break;
+          }
+        }
       }
+      setIsInBlueZone(inBlue);
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); 
-
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     gsap.to('#navbar', {
-      duration: 0.3,
-      backgroundColor: isInPengaduan
-        ? 'rgba(0, 0, 255, 0.6)'
-        : isPastMain
-        ? '#0369a1'
-        : isScrolled
-        ? 'rgba(255, 255, 255, 0)'
-        : 'transparent',
-      backdropFilter: isScrolled || isInPengaduan ? 'blur(10px)' : 'none',
-      borderBottom: isScrolled ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
+      duration: 0.4,
+      backgroundColor:
+        isInBlueZone || isPastMain
+          ? '#0369a1' 
+          : isScrolled
+          ? 'rgba(255, 255, 255, 0)'
+          : 'transparent',
+      backdropFilter: isScrolled || isInBlueZone || isPastMain ? 'blur(10px)' : 'none',
+      borderBottom: isScrolled || isInBlueZone || isPastMain
+        ? '1px solid rgba(255, 255, 255, 0.3)'
+        : 'none',
       ease: 'power2.out',
     });
-  }, [isScrolled, isPastMain, isInPengaduan]);
+  }, [isScrolled, isPastMain, isInBlueZone]);
 
   const handleHover = (e: React.MouseEvent<HTMLAnchorElement>, isEntering: boolean) => {
     const underline = e.currentTarget.querySelector<HTMLSpanElement>('.underline-bar');
@@ -54,7 +65,7 @@ const Navbar: React.FC = () => {
     gsap.killTweensOf(underline);
     gsap.to(underline, {
       width: isEntering ? '2.5rem' : '0rem',
-      duration: 0.15,
+      duration: 0.3,
       ease: 'power2.out',
     });
   };
@@ -67,23 +78,6 @@ const Navbar: React.FC = () => {
           top: 0;
           width: 100%;
           z-index: 50;
-          transition: background-color 0.3s, backdrop-filter 0.3s, border-bottom 0.3s;
-        }
-        .navbar.bg-blue {
-          background-color: rgba(0, 0, 255, 0.3);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.18);
-          background-color: rgba(0, 0, 255, 0.6);
-        }
-        .navbar.bg-transparent-blur {
-          background: rgba(255, 255, 255, 0);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .navbar.bg-sky {
-          background-color: #0369a1; 
         }
         .underline-bar {
           will-change: width;
@@ -92,13 +86,12 @@ const Navbar: React.FC = () => {
 
       <nav
         id="navbar"
-        className={`navbar flex items-center justify-between p-4 lg:px-8 text-white ${
-          isInPengaduan ? 'bg-blue' : ''
-        } ${isPastMain ? 'bg-sky' : ''} ${isScrolled ? 'bg-transparent-blur' : ''}`}
+        className="navbar flex items-center justify-between p-4 lg:px-8 text-white"
         aria-label="Global"
       >
+        {/* Logo */}
         <div className="flex lg:flex-1">
-          <Link href="/login" className="-m-1.5 p-1 flex items-center">
+          <Link href="/login" className="-m-1.5 p-1.5 flex items-center">
             <span className="sr-only">BBPPMPV BMTI</span>
             <Image
               className="h-8 w-auto sm:h-10"
@@ -106,10 +99,13 @@ const Navbar: React.FC = () => {
               alt="Logo BMTI"
               width={40}
               height={40}
+              priority
             />
-            <h1 className="flex items-center ml-2 font-bold text-lg sm:text-xl">STPP</h1>
+            <h1 className="ml-2 font-bold text-lg sm:text-xl">STPP</h1>
           </Link>
         </div>
+
+        {/* Mobile menu button */}
         <div className="flex lg:hidden">
           <button
             type="button"
@@ -122,10 +118,12 @@ const Navbar: React.FC = () => {
             </svg>
           </button>
         </div>
+
+        {/* Desktop menu */}
         <div className="hidden lg:flex lg:gap-x-12">
           <Link
             href="#"
-            className="relative group text-sm font-semibold leading-6 text-white hover:text-gray-300 transition-colors duration-150"
+            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
@@ -134,7 +132,7 @@ const Navbar: React.FC = () => {
           </Link>
           <Link
             href="#panduan"
-            className="relative group text-sm font-semibold leading-6 text-white hover:text-gray-300 transition-colors duration-150"
+            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
@@ -143,7 +141,7 @@ const Navbar: React.FC = () => {
           </Link>
           <Link
             href="#cekStatus"
-            className="relative group text-sm font-semibold leading-6 text-white hover:text-gray-300 transition-colors duration-150"
+            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
@@ -151,33 +149,42 @@ const Navbar: React.FC = () => {
             <span className="underline-bar block h-1 w-0 bg-white rounded-full mt-1 mx-auto"></span>
           </Link>
         </div>
+
+        {/* Home link */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           <Link
-            href="https://bbppmpvbmti.kemdikbud.go.id/main/"
-            className="relative group text-sm font-semibold leading-6 text-white hover:text-gray-300 transition-colors duration-150"
+            href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
+            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
-            Home <span aria-hidden="true">&rarr;</span>
+            Home <span aria-hidden="true">→</span>
             <span className="underline-bar absolute left-0 bottom-0 h-0.5 w-0 bg-white rounded-full"></span>
           </Link>
         </div>
       </nav>
 
+      {/* Mobile menu dropdown */}
       {isMobileOpen && (
-        <div className="lg:hidden bg-white text-gray-900 p-4">
-          <Link href="#" className="block py-2" onClick={() => setIsMobileOpen(false)}>
-            Beranda
-          </Link>
-          <Link href="#panduan" className="block py-2" onClick={() => setIsMobileOpen(false)}>
-            Panduan Pengisian
-          </Link>
-          <Link href="#cekStatus" className="block py-2" onClick={() => setIsMobileOpen(false)}>
-            Cek Status Pengaduan
-          </Link>
-          <Link href="https://bbppmpvbmti.kemdikbud.go.id/main/" className="block py-2" onClick={() => setIsMobileOpen(false)}>
-            Home
-          </Link>
+        <div className="lg:hidden fixed inset-x-0 top-16 z-40 bg-sky-600 shadow-lg">
+          <div className="px-4 py-6 space-y-4 text-white">
+            <Link href="#" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+              Beranda
+            </Link>
+            <Link href="#panduan" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+              Panduan Pengisian
+            </Link>
+            <Link href="#cekStatus" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+              Cek Status Pengaduan
+            </Link>
+            <Link
+              href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
+              className="block text-lg font-medium"
+              onClick={() => setIsMobileOpen(false)}
+            >
+              Home
+            </Link>
+          </div>
         </div>
       )}
     </>
