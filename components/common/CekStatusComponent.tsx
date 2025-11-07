@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-// import { useForm } from 'react-hook-form';
-// import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Clipboard, Search } from 'lucide-react';
 import gsap from 'gsap';
@@ -16,23 +14,22 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+interface StatusResult {
+  id: string;
+  status: string;
+  tanggal: string;
+  keterangan: string;
+}
+
 const CekStatusComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<StatusResult | null>(null);
+  const [idInput, setIdInput] = useState(''); 
 
-  // const {
-  //   register,
-  //   handleSubmit,
-  //   formState: { errors },
-  //   reset,
-  // } = useForm<FormData>({
-  //   resolver: zodResolver(schema),
-  // });
-
-  const titleRef = useRef<HTMLHeadingElement | null>(null);
-  const descRef = useRef<HTMLParagraphElement | null>(null);
-  const formRef = useRef<HTMLFormElement | null>(null);
-  const resultRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const descRef = useRef<HTMLParagraphElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -55,7 +52,7 @@ const CekStatusComponent = () => {
   }, []);
 
   useEffect(() => {
-    if (resultRef.current && result) {
+    if (result && resultRef.current) {
       gsap.from(resultRef.current, {
         opacity: 0,
         y: 12,
@@ -65,12 +62,20 @@ const CekStatusComponent = () => {
     }
   }, [result]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!idInput.trim()) return;
+
+    // const validated = schema.safeParse({ idPengaduan: idInput });
+    // if (!validated.success) {
+    //   alert(validated.error.errors[0].message);
+    //   return;
+    // }
+
     setIsLoading(true);
-    // tes API aja sih ini
     setTimeout(() => {
       setResult({
-        id: data.idPengaduan,
+        id: idInput,
         status: 'Sedang Diproses',
         tanggal: '2025-11-05',
         keterangan: 'Aduan Anda sedang ditinjau oleh tim terkait.',
@@ -82,56 +87,47 @@ const CekStatusComponent = () => {
   return (
     <section id="cekStatus" className="py-24 bg-white">
       <div className="mx-auto max-w-2xl text-center mb-12 px-4 sm:px-6 lg:px-8">
-        <h2
-          ref={titleRef}
-          className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl inline-block relative"
-        >
+        <h2 ref={titleRef} className="text-2xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           Cek Status Pengaduan Anda
         </h2>
-        <p
-          ref={descRef}
-          className="mt-6 text-md leading-8 text-gray-500"
-        >
+        <p ref={descRef} className="mt-6 text-md leading-8 text-gray-500">
           Layanan ini memungkinkan Anda untuk memantau perkembangan dan penanganan aduan yang telah Anda sampaikan.
         </p>
       </div>
 
-      <form
-        ref={formRef}
-        // onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col sm:flex-row items-center max-w-2xl mx-auto gap-4 px-4 sm:px-6 lg:px-8"
-      >
+      <form ref={formRef} onSubmit={onSubmit} className="flex flex-col sm:flex-row items-center max-w-2xl mx-auto gap-4 px-4 sm:px-6 lg:px-8">
         <div className="relative w-full">
           <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
             <Clipboard className="w-5 h-5 text-gray-500" />
           </div>
           <input
-            // {...register('idPengaduan')}
             type="text"
+            value={idInput}
+            onChange={(e) => setIdInput(e.target.value)}
             className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full ps-10 p-3 transition-all"
             placeholder="Masukkan ID pengaduan Anda..."
             disabled={isLoading}
           />
-          {/* {errors.idPengaduan && (
-            <p className="mt-1 text-sm text-red-600">{errors.idPengaduan.message}</p>
-          )} */}
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          aria-label="Cek status"
-          className="h-11 px-3 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center justify-center"
+          className="h-11 px-8 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 disabled:opacity-70 disabled:cursor-not-allowed transition-all flex items-center gap-2"
         >
-          <Search className="w-5 h-5" />
+          {isLoading ? (
+            <>Mencari...</>
+          ) : (
+            <>
+              <Search className="w-5 h-5" />
+              Cek Status
+            </>
+          )}
         </button>
       </form>
 
       {result && (
-        <div
-          ref={resultRef}
-          className="mt-12 max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 border border-gray-200"
-        >
+        <div ref={resultRef} className="mt-12 max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 border border-gray-200">
           <h3 className="text-xl font-bold text-gray-900 mb-4">Status Pengaduan</h3>
           <div className="space-y-3 text-left">
             <div className="flex justify-between">

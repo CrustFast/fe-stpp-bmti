@@ -161,7 +161,7 @@ const PanduanComponent = () => {
                 Status Aduan
               </p>
               <p className="max-w-md mb-3 text-sm text-gray-500 sm:mx-auto">
-                Setelah pengajuan, simpan ID pengaduan yang Anda terima. ID ini akan memungkinkan Anda untuk melacak perkembangan penanganan aduan Anda melalui opsi 'Cek Status Pengaduan'.
+                Mulai dengan memilih kategori yang paling sesuai untuk aduan Anda. Pilihan ini akan memastikan bahwa aduan Anda diteruskan ke departemen yang tepat untuk penanganan yang cepat dan tepat.
               </p>
             </div>
           </div>
