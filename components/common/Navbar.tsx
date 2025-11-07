@@ -4,12 +4,15 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
+import { useLenis } from 'lenis/react'; 
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isPastMain, setIsPastMain] = useState(false);
-  const [isInBlueZone, setIsInBlueZone] = useState(false); 
+  const [isInBlueZone, setIsInBlueZone] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  const lenis = useLenis(); 
 
   useEffect(() => {
     const blueZoneIds = ['pengaduan', 'panduan', 'cekStatus', 'manfaat'];
@@ -19,16 +22,14 @@ const Navbar: React.FC = () => {
       setIsScrolled(scrollTop > 20);
 
       const mainRect = document.getElementById('main-content')?.getBoundingClientRect();
-      if (mainRect) {
-        setIsPastMain(mainRect.bottom <= 0);
-      }
+      if (mainRect) setIsPastMain(mainRect.bottom <= 0);
 
       let inBlue = false;
       for (const id of blueZoneIds) {
         const el = document.getElementById(id);
         if (el) {
           const rect = el.getBoundingClientRect();
-          if (rect.top <= 100 && rect.bottom >= 100) {
+          if (rect.top <= 120 && rect.bottom >= 120) {
             inBlue = true;
             break;
           }
@@ -47,26 +48,45 @@ const Navbar: React.FC = () => {
       duration: 0.4,
       backgroundColor:
         isInBlueZone || isPastMain
-          ? '#0369a1' 
+          ? '#0369a1'
           : isScrolled
-          ? 'rgba(255, 255, 255, 0)'
+          ? 'rgba(255, 255, 255, 0.05)'
           : 'transparent',
-      backdropFilter: isScrolled || isInBlueZone || isPastMain ? 'blur(10px)' : 'none',
-      borderBottom: isScrolled || isInBlueZone || isPastMain
-        ? '1px solid rgba(255, 255, 255, 0.3)'
-        : 'none',
+      backdropFilter:
+        isScrolled || isInBlueZone || isPastMain ? 'blur(12px)' : 'none',
+      borderBottom:
+        isScrolled || isInBlueZone || isPastMain
+          ? '1px solid rgba(255, 255, 255, 0.25)'
+          : 'none',
       ease: 'power2.out',
     });
   }, [isScrolled, isPastMain, isInBlueZone]);
 
-  const handleHover = (e: React.MouseEvent<HTMLAnchorElement>, isEntering: boolean) => {
-    const underline = e.currentTarget.querySelector<HTMLSpanElement>('.underline-bar');
-    if (!underline) return;
-    gsap.killTweensOf(underline);
-    gsap.to(underline, {
-      width: isEntering ? '2.5rem' : '0rem',
-      duration: 0.3,
-      ease: 'power2.out',
+  const handleHover = (e: React.MouseEvent<HTMLAnchorElement>, enter: boolean) => {
+    const bar = e.currentTarget.querySelector('.underline-bar') as HTMLSpanElement;
+    if (!bar) return;
+    gsap.killTweensOf(bar);
+    gsap.to(bar, {
+      scaleX: enter ? 1 : 0,
+      duration: 0.10, 
+      ease: 'power3.out',
+    });
+  };
+
+  const smoothScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, target: string) => {
+    e.preventDefault();
+    if (target.startsWith('http')) {
+      window.open(target, '_blank');
+      return;
+    }
+
+    lenis?.scrollTo(target, {
+      offset: -100, 
+      duration: 1.4,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+      onComplete: () => {
+        if (isMobileOpen) setIsMobileOpen(false);
+      },
     });
   };
 
@@ -78,9 +98,10 @@ const Navbar: React.FC = () => {
           top: 0;
           width: 100%;
           z-index: 50;
+          transition: none !important;
         }
         .underline-bar {
-          will-change: width;
+          will-change: transform; /* ganti dari width ke transform */
         }
       `}</style>
 
@@ -89,100 +110,105 @@ const Navbar: React.FC = () => {
         className="navbar flex items-center justify-between p-4 lg:px-8 text-white"
         aria-label="Global"
       >
-        {/* Logo */}
         <div className="flex lg:flex-1">
-          <Link href="/login" className="-m-1.5 p-1.5 flex items-center">
+          <Link href="/login" className="flex items-center -m-1.5 p-1.5">
             <span className="sr-only">BBPPMPV BMTI</span>
             <Image
-              className="h-8 w-auto sm:h-10"
               src="/img/logo-bmti.png"
               alt="Logo BMTI"
               width={40}
               height={40}
+              className="h-8 w-auto sm:h-10"
               priority
             />
             <h1 className="ml-2 font-bold text-lg sm:text-xl">STPP</h1>
           </Link>
         </div>
 
-        {/* Mobile menu button */}
+        {/* MOBILE TOGGLE */}
         <div className="flex lg:hidden">
           <button
             type="button"
             onClick={() => setIsMobileOpen(!isMobileOpen)}
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
+            aria-label="Toggle menu"
           >
-            <span className="sr-only">Open main menu</span>
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
           </button>
         </div>
 
-        {/* Desktop menu */}
+        {/* DESKTOP MENU */}
         <div className="hidden lg:flex lg:gap-x-12">
           <Link
             href="#"
-            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
+            onClick={(e) => smoothScrollTo(e, '#hero')}
+            className="relative text-sm font-semibold hover:text-gray-200 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
             Beranda
-            <span className="underline-bar block h-1 w-0 bg-white rounded-full mt-1 mx-auto"></span>
+            <span className="underline-bar block h-1 w-10 bg-white rounded-full mt-1 mx-auto transform-gpu origin-center scale-x-0"></span>
           </Link>
+
           <Link
             href="#panduan"
-            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
+            onClick={(e) => smoothScrollTo(e, '#panduan')}
+            className="relative text-sm font-semibold hover:text-gray-200 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
             Panduan Pengisian
-            <span className="underline-bar block h-1 w-0 bg-white rounded-full mt-1 mx-auto"></span>
+            <span className="underline-bar block h-1 w-10 bg-white rounded-full mt-1 mx-auto transform-gpu origin-center scale-x-0"></span>
           </Link>
+
           <Link
             href="#cekStatus"
-            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
+            onClick={(e) => smoothScrollTo(e, '#cekStatus')}
+            className="relative text-sm font-semibold hover:text-gray-200 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
             Cek Status Pengaduan
-            <span className="underline-bar block h-1 w-0 bg-white rounded-full mt-1 mx-auto"></span>
+            <span className="underline-bar block h-1 w-10 bg-white rounded-full mt-1 mx-auto transform-gpu origin-center scale-x-0"></span>
           </Link>
         </div>
 
-        {/* Home link */}
+        {/* HOME EKSTERNAL */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end">
           <Link
             href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
-            className="relative text-sm font-semibold leading-6 hover:text-gray-300 transition-colors"
+            onClick={(e) => smoothScrollTo(e, 'https://bbppmpvbmti.kemendikdasmen.go.id/main/')}
+            className="relative text-sm font-semibold hover:text-gray-200 transition-colors"
             onMouseEnter={(e) => handleHover(e, true)}
             onMouseLeave={(e) => handleHover(e, false)}
           >
             Home <span aria-hidden="true">→</span>
-            <span className="underline-bar absolute left-0 bottom-0 h-0.5 w-0 bg-white rounded-full"></span>
+            <span className="underline-bar absolute left-0 bottom-0 h-0.5 w-10 bg-white rounded-full transform-gpu origin-left scale-x-0"></span>
           </Link>
         </div>
       </nav>
 
-      {/* Mobile menu dropdown */}
+      {/* MOBILE DROPDOWN */}
       {isMobileOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 z-40 bg-sky-600 shadow-lg">
-          <div className="px-4 py-6 space-y-4 text-white">
-            <Link href="#" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+        <div className="lg:hidden fixed inset-x-0 top-16 z-40 bg-sky-700/95 backdrop-blur-lg shadow-2xl border-t border-white/20">
+          <div className="px-6 py-8 space-y-6 text-white">
+            <Link href="#" onClick={(e) => { smoothScrollTo(e, '#hero'); setIsMobileOpen(false); }} className="block text-xl font-medium">
               Beranda
             </Link>
-            <Link href="#panduan" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+            <Link href="#panduan" onClick={(e) => { smoothScrollTo(e, '#panduan'); setIsMobileOpen(false); }} className="block text-xl font-medium">
               Panduan Pengisian
             </Link>
-            <Link href="#cekStatus" className="block text-lg font-medium" onClick={() => setIsMobileOpen(false)}>
+            <Link href="#cekStatus" onClick={(e) => { smoothScrollTo(e, '#cekStatus'); setIsMobileOpen(false); }} className="block text-xl font-medium">
               Cek Status Pengaduan
             </Link>
             <Link
               href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
-              className="block text-lg font-medium"
-              onClick={() => setIsMobileOpen(false)}
+              onClick={(e) => { smoothScrollTo(e, 'https://bbppmpvbmti.kemendikdasmen.go.id/main/'); setIsMobileOpen(false); }}
+              className="block text-xl font-medium"
             >
-              Home
+              Home →
             </Link>
           </div>
         </div>
