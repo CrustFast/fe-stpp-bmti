@@ -11,6 +11,7 @@ const Pengaduan: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
   const modalRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
 
   const sectionRef = useRef<HTMLElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -18,18 +19,22 @@ const Pengaduan: React.FC = () => {
   const cardInternalRef = useRef<HTMLDivElement>(null);
   const cardExternalRef = useRef<HTMLDivElement>(null);
 
+  const scaleQuickMap = useRef(new WeakMap<HTMLElement, (v: number) => void>());
+
   const handleCardHover = (e: React.MouseEvent<HTMLDivElement>, isEntering: boolean) => {
-    gsap.to(e.currentTarget, {
-      scale: isEntering ? 1.05 : 1,
-      duration: 0.3,
-      ease: 'power2.out',
-    });
+    const el = e.currentTarget;
+    let quick = scaleQuickMap.current.get(el);
+    if (!quick) {
+      quick = gsap.quickTo(el, 'scale', { duration: 0.18, ease: 'power2.out' });
+      scaleQuickMap.current.set(el, quick);
+    }
+    quick(isEntering ? 1.04 : 1);
   };
 
   const handleLinkHover = (e: React.MouseEvent<HTMLAnchorElement>, isEntering: boolean) => {
     gsap.to(e.currentTarget, {
       color: isEntering ? '#1d4ed8' : '#2563eb',
-      duration: 0.3,
+      duration: 0.2,
       ease: 'power2.out',
     });
   };
@@ -42,7 +47,7 @@ const Pengaduan: React.FC = () => {
     router.push(path);
   };
 
-  useEffect(() => {
+  useEffect(() => { 
     const handleClickOutside = (e: MouseEvent) => {
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         closeModal();
@@ -55,18 +60,24 @@ const Pengaduan: React.FC = () => {
   }, [isModalOpen]);
 
   useEffect(() => {
-    if (isModalOpen) {
+    if (!isModalOpen) return;
+
+    gsap.set([modalRef.current, backdropRef.current], { willChange: 'transform, opacity' });
+
+    const ctx = gsap.context(() => {
       gsap.fromTo(
-        '#select-modal .modal-content',
-        { opacity: 0, scale: 0.95, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: 'power2.out' }
+        modalRef.current,
+        { opacity: 0, y: 16, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.25, ease: 'power2.out' }
       );
       gsap.fromTo(
-        '#select-modal .backdrop',
+        backdropRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 0.3, ease: 'power2.out' }
+        { opacity: 1, duration: 0.25, ease: 'power2.out' }
       );
-    }
+    });
+
+    return () => ctx.revert();
   }, [isModalOpen]);
 
   useEffect(() => {
@@ -123,7 +134,13 @@ const Pengaduan: React.FC = () => {
     <>
       <style jsx>{`
         .card {
-          transition: transform 0.3s;
+          will-change: transform;
+        }
+        .modal-content {
+          will-change: transform, opacity;
+        }
+        .backdrop {
+          will-change: opacity;
         }
       `}</style>
 
@@ -146,10 +163,9 @@ const Pengaduan: React.FC = () => {
             </div>
 
             <div className="grid max-w-2xl grid-cols-1 gap-x-52 gap-y-16 sm:gap-y-20 lg:max-w-none lg:grid-cols-2">
-              {/* CARD INTERNAL */}
               <div
                 ref={cardInternalRef}
-                className="card max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow"
+                className="card transform-gpu max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow"
                 onMouseEnter={(e) => handleCardHover(e, true)}
                 onMouseLeave={(e) => handleCardHover(e, false)}
               >
@@ -177,7 +193,7 @@ const Pengaduan: React.FC = () => {
                   onMouseLeave={(e) => handleLinkHover(e, false)}
                 >
                   Open
-                  <svg className="w-3 h-3 ms-2.5 rtl:rotate-[270deg]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                  <svg className="w-3 h-3 ms-2.5 rtl:rotate-[270]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
                   </svg>
                 </a>
@@ -190,13 +206,14 @@ const Pengaduan: React.FC = () => {
                   aria-hidden={!isModalOpen}
                 >
                   <div
-                    className="backdrop fixed inset-0 bg-black/50 backdrop-blur-md transition-opacity"
+                    ref={backdropRef}
+                    className="backdrop fixed inset-0 bg-black/50 transition-opacity"
                     onClick={closeModal}
                   />
 
                   <div
                     ref={modalRef}
-                    className="modal-content relative p-4 w-full max-w-md max-h-full z-10"
+                    className="modal-content transform-gpu relative p-4 w-full max-w-md max-h-full z-10"
                   >
                     <div className="relative bg-white rounded-lg shadow-lg">
                       <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t border-gray-200">
@@ -255,10 +272,9 @@ const Pengaduan: React.FC = () => {
                 </div>
               )}
 
-              {/* CARD EKSTERNAL */}
               <div
                 ref={cardExternalRef}
-                className="card max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow"
+                className="card transform-gpu max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow"
                 onMouseEnter={(e) => handleCardHover(e, true)}
                 onMouseLeave={(e) => handleCardHover(e, false)}
               >
@@ -282,7 +298,7 @@ const Pengaduan: React.FC = () => {
                   onMouseLeave={(e) => handleLinkHover(e, false)}
                 >
                   Open
-                  <svg className="w-3 h-3 ms-2.5 rtl:rotate-[270deg]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+                  <svg className="w-3 h-3 ms-2.5 rtl:rotate-[270]" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
                     <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
                   </svg>
                 </Link>
