@@ -238,7 +238,7 @@ const Pengaduan: React.FC = () => {
                             <label
                               htmlFor="silagra"
                               className="inline-flex items-center justify-between w-full p-5 text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
-                              onClick={() => handleRadioClick('/internal')}
+                              onClick={() => handleRadioClick('/aksi')}
                             >
                               <div className="block">
                                 <div className="w-full text-lg font-semibold">AKSI</div>
@@ -254,7 +254,7 @@ const Pengaduan: React.FC = () => {
                             <label
                               htmlFor="job-2"
                               className="inline-flex items-center justify-between w-full p-5 text-gray-900 bg-white border border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-600 peer-checked:text-blue-600 hover:text-gray-900 hover:bg-gray-100 transition-all"
-                              onClick={() => handleRadioClick('/benturan-kepentingan')}
+                              onClick={() => handleRadioClick('/konfes')}
                             >
                               <div className="block">
                                 <div className="w-full text-lg font-semibold">KONFES</div>
