@@ -4,6 +4,7 @@ import { AksiOptions } from '@/components/common/KanalAduan';
 import { TimelineGratifikasi } from '@/components/common/TimelineGratifikasi';
 
 import FooterComponent from '@/layouts/Footer';
+
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
