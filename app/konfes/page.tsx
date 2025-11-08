@@ -1,3 +1,8 @@
+import Navbar from '@/components/common/NavbarKonfes';
+import { HeroAksi } from '@/components/common/HeroKonfes';
+
+import FooterComponent from '@/layouts/Footer';
+
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -8,7 +13,9 @@ export const metadata: Metadata = {
 export default function ManfaatPage() {
   return (
     <>
-
+      <Navbar />
+      <HeroAksi />
+      <FooterComponent />
     </>
   );
 }
