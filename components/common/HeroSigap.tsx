@@ -1,4 +1,3 @@
-// filepath: d:\Magang (BMTI)\fe-stpp-bmti\components\common\HeroSigap.tsx
 'use client';
 
 import Image from 'next/image';
@@ -7,16 +6,6 @@ import gsap from 'gsap';
 
 export function LayananInformasi() {
   useGSAP(() => {
-    // Animasi float gambar
-    // gsap.to('.float-animation', {
-    //   y: -20,
-    //   duration: 3,
-    //   repeat: -1,
-    //   yoyo: true,
-    //   ease: 'sine.inOut',
-    // });
-
-    // Animasi teks masuk dari kiri
     gsap.from('.text-content', {
       x: -60,
       opacity: 0,
@@ -32,8 +21,6 @@ export function LayananInformasi() {
 
       <div className="relative z-10 mx-auto max-w-7xl h-full px-6 lg:px-8 py-24 sm:py-32">
         <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-6 gap-y-16 sm:gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-          
-          {/* Teks Kiri */}
           <div className="lg:pr-12 lg:pt-4 text-content">
             <div>
               <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold leading-tight text-white text-center lg:text-left">
@@ -45,7 +32,6 @@ export function LayananInformasi() {
             </div>
           </div>
 
-          {/* Gambar Kanan dengan Animasi Float */}
           <div className="flex justify-center lg:justify-end">
             <Image
               src="/img/ILUSTRASI CUSTOMER SERVICE.png"
