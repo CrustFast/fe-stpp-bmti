@@ -1,13 +1,14 @@
 import Navbar from '@/components/common/NavbarSigap';
 import { LayananInformasi } from '@/components/common/HeroSigap';
+import { LaporanForm } from '@/components/common/LaporanForm';
 
 import FooterComponent from '@/layouts/Footer';
 
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Kontrol Benturan Kepentingan Sistematis | KONFES',
-  description: 'Kontrol Benturan Kepentingan Sistematis',
+  title: 'Layanan Pengaduan Eksternal | SIGAP',
+  description: 'Layanan Pengaduan Eksternal',
 };
 
 export default function ManfaatPage() {
@@ -15,6 +16,7 @@ export default function ManfaatPage() {
     <>
       <Navbar />
       <LayananInformasi />
+      <LaporanForm />
       <FooterComponent />
     </>
   );
