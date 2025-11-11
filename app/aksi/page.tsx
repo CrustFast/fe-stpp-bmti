@@ -2,6 +2,7 @@ import Navbar from '@/components/common/NavbarAksi';
 import { HeroAksi } from '@/components/common/HeroAksi';
 import { AksiOptions } from '@/components/common/KanalAduan';
 import { TimelineGratifikasi } from '@/components/common/TimelineGratifikasi';
+import { GratifikasiForm } from '@/components/common/GratifikasiForm';
 
 import FooterComponent from '@/layouts/Footer';
 
@@ -19,6 +20,7 @@ export default function ManfaatPage() {
       <HeroAksi />
       <AksiOptions />
       <TimelineGratifikasi />
+      <GratifikasiForm />
       <FooterComponent />
     </>
   );
