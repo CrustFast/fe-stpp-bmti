@@ -26,6 +26,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { Control, ControllerRenderProps, FieldValues } from 'react-hook-form';
 
 const klasifikasiOptions = ['pengaduan', 'permintaan-informasi', 'saran'] as const;
 
@@ -90,6 +91,8 @@ const formSchema = z.object({
   privasi: z.enum(['anonim', 'rahasia']).optional(),
 });
 
+type FormSchema = z.infer<typeof formSchema>;
+
 const tipeOptions = {
   diklat: [
     { value: 'daring', label: 'Daring' },
@@ -110,7 +113,7 @@ const fasilitasOptions = [
 ];
 
 export function LaporanForm() {
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       klasifikasi_laporan: undefined,
@@ -138,7 +141,7 @@ export function LaporanForm() {
     }
   }, [privasi, tipe, setValue, watch]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: FormSchema) {
     console.log(values);
     toast.success('Laporan Terkirim!', {
       description: 'Terima kasih atas laporan Anda.',
@@ -431,7 +434,7 @@ export function LaporanForm() {
                 <div className="rounded-md bg-red-50 p-4 sm:col-span-2">
                   <p className="text-sm text-red-800">
                     Terkait permintaan informasi, silahkan kunjungi website PPID kami di{' '}
-                    <a href="https://bbppmpvbmti.kemendikdasmen.go.id/Ppid/" target="_blank" className="underline text-blue-600">
+                    <a href="https://bbppmpvbmti.kemendikdasmen.go.id/Ppid/" target="_blank" rel="noopener noreferrer" className="underline text-blue-600">
                       www.bbppmpvbmti.kemendikdasmen.go.id/Ppid/
                     </a>
                     .
@@ -507,7 +510,14 @@ export function LaporanForm() {
   );
 }
 
-function InputField({ label, className, readOnly, type, placeholder, ...field }: { label: string; className?: string; readOnly?: boolean; type?: string; placeholder?: string } & any) {
+interface InputFieldProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+  label: string;
+  className?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+function InputField({ label, className, readOnly, type, placeholder, value, onChange, ...rest }: InputFieldProps) {
   return (
     <FormItem className={className}>
       <FormLabel>{label}</FormLabel>
@@ -516,6 +526,8 @@ function InputField({ label, className, readOnly, type, placeholder, ...field }:
           type={type}
           readOnly={readOnly}
           placeholder={placeholder ?? ' '}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
           className="w-full h-11 py-2.5
                      border border-blue-500/60
                      focus:border-blue-500
@@ -523,7 +535,7 @@ function InputField({ label, className, readOnly, type, placeholder, ...field }:
                      focus-visible:outline-none
                      focus:text-blue-500
                      shadow-none"
-          {...field}
+          {...rest}
         />
       </FormControl>
       <FormMessage />
@@ -531,18 +543,30 @@ function InputField({ label, className, readOnly, type, placeholder, ...field }:
   );
 }
 
-function SelectField({ label, placeholder, options, className, ...field }: any) {
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface SelectFieldProps extends Omit<ControllerRenderProps<FieldValues, string>, 'ref'> {
+  label: string;
+  placeholder: string;
+  options: SelectOption[];
+  className?: string;
+}
+
+function SelectField({ label, placeholder, options, className, onChange, value }: SelectFieldProps) {
   return (
     <FormItem className={className}>
       <FormLabel>{label}</FormLabel>
-      <Select onValueChange={field.onChange} defaultValue={field.value}>
+      <Select onValueChange={onChange} defaultValue={value}>
         <FormControl>
           <SelectTrigger className="w-full h-11 border-blue-500/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:text-blue-500">
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
         </FormControl>
         <SelectContent>
-          {options.map((opt: any) => (
+          {options.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}
             </SelectItem>
@@ -554,7 +578,15 @@ function SelectField({ label, placeholder, options, className, ...field }: any) 
   );
 }
 
-function DateRangeField({ label, startName, endName, control, className }: any) {
+interface DateRangeFieldProps {
+  label: string;
+  startName: keyof FormSchema;
+  endName: keyof FormSchema;
+  control: Control<FormSchema>;
+  className?: string;
+}
+
+function DateRangeField({ label, startName, endName, control, className }: DateRangeFieldProps) {
   const [openStart, setOpenStart] = React.useState(false);
   const [openEnd, setOpenEnd] = React.useState(false);
   return (
@@ -576,7 +608,7 @@ function DateRangeField({ label, startName, endName, control, className }: any) 
                     field.value ? 'text-black rounded-md' : 'text-black'
                   )}
                 >
-                  {field.value ? format(field.value, 'dd MMMM yyyy', { locale: id }) : 'Mulai'}
+                  {field.value && field.value instanceof Date ? format(field.value, 'dd MMMM yyyy', { locale: id }) : 'Mulai'}
                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -584,7 +616,7 @@ function DateRangeField({ label, startName, endName, control, className }: any) 
                 <Calendar
                   locale={id}
                   mode="single"
-                  selected={field.value}
+                  selected={field.value instanceof Date ? field.value : undefined}
                   onSelect={(d) => {
                     if (d) {
                       field.onChange(d);
@@ -612,7 +644,7 @@ function DateRangeField({ label, startName, endName, control, className }: any) 
                     field.value ? 'text-black rounded-md' : 'text-black'
                   )}
                 >
-                  {field.value ? format(field.value, 'dd MMMM yyyy', { locale: id }) : 'Akhir'}
+                  {field.value && field.value instanceof Date ? format(field.value, 'dd MMMM yyyy', { locale: id }) : 'Akhir'}
                   <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -620,7 +652,7 @@ function DateRangeField({ label, startName, endName, control, className }: any) 
                 <Calendar
                   locale={id}
                   mode="single"
-                  selected={field.value}
+                  selected={field.value instanceof Date ? field.value : undefined}
                   onSelect={(d) => {
                     if (d) {
                       field.onChange(d);
@@ -637,7 +669,12 @@ function DateRangeField({ label, startName, endName, control, className }: any) 
   );
 }
 
-function PrivasiRadio({ control, className }: any) {
+interface PrivasiRadioProps {
+  control: Control<FormSchema>;
+  className?: string;
+}
+
+function PrivasiRadio({ control, className }: PrivasiRadioProps) {
   return (
     <FormField
       control={control}
