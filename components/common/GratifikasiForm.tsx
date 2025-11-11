@@ -1,0 +1,385 @@
+'use client';
+
+import React from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormControl,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
+import { toast } from 'sonner';
+
+const jenisLaporanOptions = ['penerimaan', 'penolakan'] as const;
+
+const formSchema = z.object({
+  jenis_laporan: z
+    .enum(jenisLaporanOptions)
+    .nullable()
+    .refine((val) => val != null, { message: 'Pilih jenis laporan.' }),
+
+  nama_pelapor: z.string().min(1, 'Nama pelapor wajib diisi.'),
+  jabatan: z.string().min(1, 'Jabatan wajib diisi.'),
+  nomor_telepon: z
+    .string()
+    .regex(/^\d{10,15}$/, 'Nomor telepon harus 10-15 digit.'),
+  email: z.string().email('Format email tidak valid.'),
+
+  tanggal_penerimaan_penolakan: z
+    .date()
+    .nullable()
+    .refine((d) => d instanceof Date, { message: 'Tanggal wajib diisi.' }),
+
+  tanggal_dilaporkan: z
+    .date()
+    .nullable()
+    .refine((d) => d instanceof Date, { message: 'Tanggal dilaporkan wajib diisi.' }),
+
+  nama_pemberi: z.string().min(1, 'Nama pemberi wajib diisi.'),
+  hubungan: z.string().min(1, 'Hubungan wajib diisi.'),
+  objek_gratifikasi: z.string().min(1, 'Objek gratifikasi wajib diisi.'),
+  kronologi: z.string().min(1, 'Kronologi wajib diisi.'),
+  bukti_files: z
+    .array(z.instanceof(File))
+    .min(1, 'Minimal 1 file bukti harus diunggah.')
+    .optional(),
+});
+
+type FormSchema = z.infer<typeof formSchema>;
+
+export function GratifikasiForm() {
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      jenis_laporan: undefined,
+    },
+  });
+
+  const jenisLaporan = form.watch('jenis_laporan');
+  const labelTanggalUtama =
+    jenisLaporan === 'penolakan' ? 'Tanggal Penolakan' : 'Tanggal Penerimaan';
+
+  const [openTanggalUtama, setOpenTanggalUtama] = React.useState(false);
+  const [openTanggalDilaporkan, setOpenTanggalDilaporkan] = React.useState(false);
+
+  function onSubmit(values: FormSchema) {
+    console.log(values);
+    toast.success('Laporan Gratifikasi Terkirim!', {
+      description: 'Terima kasih atas laporan Anda.',
+    });
+  }
+
+  const hasGlobalErrors = Object.keys(form.formState.errors).length > 0 && form.formState.isSubmitted;
+
+  return (
+    <div id="gratifikasiForm" className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="text-2xl font-bold tracking-tight text-blue-bmti sm:text-4xl">
+          Lengkapi Data dan Tuliskan Pengaduan
+        </h2>
+      </div>
+
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mx-auto mt-3 max-w-xl sm:mt-20 bg-white shadow-xl rounded-lg p-6"
+        >
+          <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+            <FormItem className="sm:col-span-2">
+              <FormLabel className="block text-base font-bold text-center">
+                Form Input Laporan Gratifikasi
+              </FormLabel>
+            </FormItem>
+
+            <FormField
+              control={form.control}
+              name="jenis_laporan"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2 mt-2">
+                  <FormLabel className="block text-sm font-semibold text-center w-full">
+                    Jenis Laporan <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      className="flex justify-center mt-3"
+                    >
+                      <div className="flex flex-col md:flex-row items-center gap-6">
+                        <div className="flex items-center gap-x-2">
+                          <RadioGroupItem
+                            value="penerimaan"
+                            id="penerimaan"
+                            className="border-blue-500 data-[state=checked]:border-blue-500"
+                          />
+                          <FormLabel htmlFor="penerimaan" className="font-normal cursor-pointer">
+                            Penerimaan
+                          </FormLabel>
+                        </div>
+                        <div className="flex items-center gap-x-2">
+                          <RadioGroupItem
+                            value="penolakan"
+                            id="penolakan"
+                            className="border-blue-500 data-[state=checked]:border-blue-500"
+                          />
+                          <FormLabel htmlFor="penolakan" className="font-normal cursor-pointer">
+                            Penolakan
+                          </FormLabel>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <SectionLabel className="sm:col-span-2" title="1. Informasi Pelapor" />
+
+            <InputField
+              control={form.control}
+              name="nama_pelapor"
+              label="Nama Pelapor"
+              required
+            />
+            <InputField control={form.control} name="jabatan" label="Jabatan" required />
+            <InputField
+              control={form.control}
+              name="nomor_telepon"
+              label="Nomor WhatsApp Aktif Pelapor"
+              required
+              type="tel"
+              placeholder=""
+            />
+            <InputField control={form.control} name="email" label="Email Pelapor" required type="email" />
+
+            <SectionLabel className="sm:col-span-2 mt-4" title="2. Deskripsi Kejadian" />
+
+            <FormField
+              control={form.control}
+              name="tanggal_penerimaan_penolakan"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {labelTanggalUtama} <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <DatePopover
+                    value={field.value}
+                    onChange={field.onChange}
+                    open={openTanggalUtama}
+                    setOpen={setOpenTanggalUtama}
+                    placeholder={labelTanggalUtama}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tanggal_dilaporkan"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Tanggal Dilaporkan ke UPG <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <DatePopover
+                    value={field.value}
+                    onChange={field.onChange}
+                    open={openTanggalDilaporkan}
+                    setOpen={setOpenTanggalDilaporkan}
+                    placeholder="Tanggal Dilaporkan"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <InputField control={form.control} name="nama_pemberi" label="Nama Pemberi Gratifikasi" required />
+            <InputField control={form.control} name="hubungan" label="Hubungan" required />
+            <InputField control={form.control} name="objek_gratifikasi" label="Objek Gratifikasi" required />
+
+            <FormField
+              control={form.control}
+              name="kronologi"
+              render={({ field }) => (
+                <FormItem className="sm:col-span-2 mt-2">
+                  <FormLabel>
+                    Kronologi Kejadian <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={4}
+                      placeholder="Kronologi Kejadian"
+                      className="border-blue-500/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:text-blue-500"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bukti_files"
+              render={() => (
+                <FormItem className="sm:col-span-2 mt-2">
+                  <FormLabel>
+                    Foto(Bukti) / Dokumen <span className="text-red-600">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="file"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx"
+                      className="w-full"
+                      onChange={(e) =>
+                        form.setValue(
+                          'bukti_files',
+                          e.target.files ? Array.from(e.target.files) : []
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {hasGlobalErrors && (
+            <div className="mt-6 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-700">
+              <p className="font-semibold mb-2">
+                Anda belum mengisi semua data yang diperlukan. Silakan lengkapi dan coba lagi.
+              </p>
+              <ul className="list-disc ps-5 space-y-1">
+                {Object.values(form.formState.errors).map((err, i) => (
+                  <li key={i}>{err.message}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-10">
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
+            >
+              KIRIM!
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
+function SectionLabel({ title, className }: { title: string; className?: string }) {
+  return (
+    <div className={cn('sm:col-span-2', className)}>
+      <FormLabel className="block text-base font-bold leading-6 text-gray-900">
+        {title} <span className="text-red-600">*</span>
+      </FormLabel>
+    </div>
+  );
+}
+
+function DatePopover({
+  value,
+  onChange,
+  open,
+  setOpen,
+  placeholder,
+}: {
+  value: Date | null;
+  onChange: (d: Date | null) => void;
+  open: boolean;
+  setOpen: (o: boolean) => void;
+  placeholder: string;
+}) {
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          onClick={() => setOpen(true)}
+          className={cn(
+            'h-11 w-full pl-3 pr-3 py-0 items-center text-left font-normal',
+            'border-blue-500/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:text-blue-500',
+            value ? 'text-black' : 'text-muted-foreground'
+          )}
+        >
+          {value instanceof Date ? format(value, 'dd MMMM yyyy', { locale: id }) : placeholder}
+          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <Calendar
+          locale={id}
+          mode="single"
+          selected={value ?? undefined}
+          onSelect={(d) => {
+            if (d) {
+              onChange(d);
+              setOpen(false);
+            }
+          }}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function InputField({
+  control,
+  name,
+  label,
+  required,
+  type,
+  placeholder,
+}: {
+  control: any;
+  name: keyof FormSchema;
+  label: string;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>
+            {label} {required && <span className="text-red-600">*</span>}
+          </FormLabel>
+          <FormControl>
+            <Input
+              type={type}
+              placeholder={placeholder ?? ' '}
+              className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:text-blue-500"
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
