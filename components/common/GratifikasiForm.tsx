@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import type { Control } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -353,8 +354,8 @@ function InputField({
   type,
   placeholder,
 }: {
-  control: any;
-  name: keyof FormSchema;
+  control: Control<FormSchema>;
+  name: Extract<keyof FormSchema, 'nama_pelapor' | 'jabatan' | 'nomor_telepon' | 'email' | 'nama_pemberi' | 'hubungan' | 'objek_gratifikasi'>;
   label: string;
   required?: boolean;
   type?: string;
@@ -375,6 +376,7 @@ function InputField({
               placeholder={placeholder ?? ' '}
               className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:text-blue-500"
               {...field}
+              value={field.value as string}
             />
           </FormControl>
           <FormMessage />
