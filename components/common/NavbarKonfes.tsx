@@ -14,7 +14,7 @@ const Navbar: React.FC = () => {
   const lenis = useLenis(); 
 
   useEffect(() => {
-    const blueZoneIds = ['kanalAduan', 'timeline'];
+    const blueZoneIds = ['kanalAduan', 'benturanKepentinganForm'];
 
     const handleScroll = () => {
       const scrollTop = window.scrollY;
