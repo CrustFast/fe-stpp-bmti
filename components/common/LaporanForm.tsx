@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect } from 'react';
 import React from 'react';
+import { FilePondUploader } from '@/components/ui/FilePondUploader';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -89,6 +90,8 @@ const formSchema = z.object({
   isi_laporan_saran: z.string().optional(),
 
   privasi: z.enum(['anonim', 'rahasia']).optional(),
+
+  bukti_foto: z.array(z.instanceof(File).refine(f => /^(image\/.*|application\/pdf)$/.test(f.type), 'Hanya gambar atau PDF')).max(10).optional(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -491,10 +494,26 @@ export function LaporanForm() {
 
             {klasifikasi === 'pengaduan' && (
               <div className="col-span-full">
-                <FormLabel>Foto Sebagai Bukti Pendukung</FormLabel>
-                <div className="mt-2">
-                  <Input type="file" multiple accept="image/*" className="w-full" />
-                </div>
+                <FormField
+                  control={form.control}
+                  name="bukti_foto"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Foto Sebagai Bukti Pendukung (opsional)</FormLabel>
+                      <FormControl>
+                        <FilePondUploader
+                          control={form.control}
+                          name="bukti_foto"
+                          helperText="Maksimal 10 file, format JPG/PNG/WebP atau PDF"
+                          maxFiles={10}
+                          allowMultiple
+                          acceptedFileTypes={['image/*', 'application/pdf']}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             )}
           </div>
