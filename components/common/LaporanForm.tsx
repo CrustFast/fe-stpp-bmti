@@ -275,7 +275,7 @@ export function LaporanForm() {
         nama_peserta_diklat: values.nama_peserta_diklat,
         nomor_telepon_peserta_diklat: values.nomor_telepon_peserta_diklat,
         asal_smk_peserta_diklat: values.asal_smk_peserta_diklat,
-        program_keahlian: values.program_keahlian, // backend validate:"numeric" (string angka)
+        program_keahlian: values.program_keahlian,
 
         // --- pkl ---
         periode_magang_mulai: toDateStr(values.periode_magang_mulai),
@@ -362,7 +362,7 @@ export function LaporanForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      className="flex flex-col sm:flex-row items-center justify-center gap-x-3 gap-y-3 mb-4 pb-2"
+                      className="flex flex-col sm:flex-row gap-x-3 gap-y-3 mb-4 pb-2 items-start sm:items-center sm:justify-center text-left"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
                         <FormControl>

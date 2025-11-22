@@ -24,6 +24,7 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
+import { FilePondUploader } from '@/components/ui/FilePondUploader';
 
 const formSchema = z.object({
   // 1. Informasi Pelapor
@@ -51,9 +52,18 @@ const formSchema = z.object({
   kronologi_kejadian: z.string().min(1, 'Kronologi kejadian wajib diisi.'),
 
   bukti_files: z
-    .array(z.instanceof(File))
+    .array(
+      z
+        .instanceof(File)
+        .refine(
+          f =>
+            /^(image\/.*|video\/.*|application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document)$/.test(
+              f.type
+            ),
+          'Format file tidak didukung.'
+        )
+    )
     .min(1, 'Minimal 1 file bukti harus diunggah.')
-    .optional(),
 });
 
 export type BenturanFormSchema = z.infer<typeof formSchema>;
@@ -311,23 +321,25 @@ export function BenturanKepentinganForm({
             <FormField
               control={form.control}
               name="bukti_files"
-              render={() => (
+              render={({ field }) => (
                 <FormItem className="sm:col-span-2 mt-2">
                   <FormLabel>
                     Upload file (dokumen, foto, video, dll.) <span className="text-red-600">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      multiple
-                      accept="image/*,video/*,.pdf,.doc,.docx"
-                      className="w-full"
-                      onChange={(e) =>
-                        form.setValue(
-                          'bukti_files',
-                          e.target.files ? Array.from(e.target.files) : []
-                        )
-                      }
+                    <FilePondUploader
+                      control={form.control}
+                      name="bukti_files"
+                      helperText="Minimal 1 file. Maks 10 file. Format: Gambar / Video / PDF / DOC / DOCX"
+                      maxFiles={10}
+                      allowMultiple
+                      acceptedFileTypes={[
+                        'image/*',
+                        'video/*',
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                      ]}
                     />
                   </FormControl>
                   <FormMessage />

@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
 import { useLenis } from 'lenis/react'; 
+import { Menu, X } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,6 +14,8 @@ const Navbar: React.FC = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const lenis = useLenis(); 
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileLinksRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const blueZoneIds = ['pengaduan', 'panduan', 'cekStatus', 'manfaat'];
@@ -62,6 +65,51 @@ const Navbar: React.FC = () => {
     });
   }, [isScrolled, isPastMain, isInBlueZone]);
 
+  useEffect(() => {
+    if (mobileMenuRef.current) {
+      gsap.set(mobileMenuRef.current, { y: -100, opacity: 0, display: 'none' });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!mobileMenuRef.current) return;
+    const links = mobileMenuRef.current.querySelectorAll('.mobile-link');
+
+    if (isMobileOpen) {
+      gsap.set(mobileMenuRef.current, { display: 'block' });
+      const tl = gsap.timeline();
+      tl.to(mobileMenuRef.current, {
+        y: 0,
+        opacity: 1,
+        duration: 0.5,
+        ease: 'power3.out'
+      }).fromTo(
+        links,
+        { opacity: 0, y: 24 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          stagger: 0.1,
+          ease: 'power2.out'
+        },
+        '-=0.25'
+      );
+    } else {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          gsap.set(mobileMenuRef.current, { display: 'none' });
+        }
+      });
+      tl.to(mobileMenuRef.current, {
+        y: -60,
+        opacity: 0,
+        duration: 0.4,
+        ease: 'power2.in'
+      });
+    }
+  }, [isMobileOpen]);
+
   const handleHover = (e: React.MouseEvent<HTMLAnchorElement>, enter: boolean) => {
     const bar = e.currentTarget.querySelector('.underline-bar') as HTMLSpanElement;
     if (!bar) return;
@@ -90,6 +138,8 @@ const Navbar: React.FC = () => {
     });
   };
 
+  const toggleMobile = () => setIsMobileOpen(o => !o);
+
   return (
     <>
       <style jsx global>{`
@@ -101,7 +151,7 @@ const Navbar: React.FC = () => {
           transition: none !important;
         }
         .underline-bar {
-          will-change: transform; /* ganti dari width ke transform */
+          will-change: transform;
         }
       `}</style>
 
@@ -129,13 +179,26 @@ const Navbar: React.FC = () => {
         <div className="flex lg:hidden">
           <button
             type="button"
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
-            aria-label="Toggle menu"
+            onClick={toggleMobile}
+            aria-label={isMobileOpen ? 'Tutup menu' : 'Buka menu'}
+            className="relative inline-flex items-center justify-center rounded-md p-2.5 text-white transition-colors"
           >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
+            <span className="relative w-6 h-6">
+              <span className="absolute inset-0 flex items-center justify-center">
+                <Menu
+                  className={`h-6 w-6 transition-all duration-300 ${
+                    isMobileOpen ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
+                  }`}
+                />
+              </span>
+              <span className="absolute inset-0 flex items-center justify-center">
+                <X
+                  className={`h-6 w-6 transition-all duration-300 ${
+                    isMobileOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
+                  }`}
+                />
+              </span>
+            </span>
           </button>
         </div>
 
@@ -190,29 +253,42 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* MOBILE DROPDOWN */}
-      {isMobileOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-16 z-40 bg-sky-700/95 backdrop-blur-lg shadow-2xl border-t border-white/20">
-          <div className="px-6 py-8 space-y-6 text-white">
-            <Link href="#" onClick={(e) => { smoothScrollTo(e, '#hero'); setIsMobileOpen(false); }} className="block text-xl font-medium">
-              Beranda
-            </Link>
-            <Link href="#panduan" onClick={(e) => { smoothScrollTo(e, '#panduan'); setIsMobileOpen(false); }} className="block text-xl font-medium">
-              Panduan Pengisian
-            </Link>
-            <Link href="#cekStatus" onClick={(e) => { smoothScrollTo(e, '#cekStatus'); setIsMobileOpen(false); }} className="block text-xl font-medium">
-              Cek Status Pengaduan
-            </Link>
-            <Link
-              href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
-              onClick={(e) => { smoothScrollTo(e, 'https://bbppmpvbmti.kemendikdasmen.go.id/main/'); setIsMobileOpen(false); }}
-              className="block text-xl font-medium"
-            >
-              Home →
-            </Link>
-          </div>
+      {/* MOBILE MENU OVERLAY */}
+      <div
+        ref={mobileMenuRef}
+        className="lg:hidden fixed inset-x-0 top-0 z-40 bg-sky-700/95 backdrop-blur-lg shadow-2xl border-b border-white/20 pt-20 pb-12"
+      >
+        <div ref={mobileLinksRef} className="px-6 space-y-7 text-white text-lg font-medium">
+          <Link
+            href="#hero"
+            onClick={(e) => { smoothScrollTo(e, '#hero'); toggleMobile(); }}
+            className="block mobile-link"
+          >
+            Beranda
+          </Link>
+          <Link
+            href="#panduan"
+            onClick={(e) => { smoothScrollTo(e, '#panduan'); toggleMobile(); }}
+            className="block mobile-link"
+          >
+            Panduan Pengisian
+          </Link>
+          <Link
+            href="#cekStatus"
+            onClick={(e) => { smoothScrollTo(e, '#cekStatus'); toggleMobile(); }}
+            className="block mobile-link"
+          >
+            Cek Status Pengaduan
+          </Link>
+          <Link
+            href="https://bbppmpvbmti.kemendikdasmen.go.id/main/"
+            onClick={(e) => { smoothScrollTo(e, 'https://bbppmpvbmti.kemendikdasmen.go.id/main/'); toggleMobile(); }}
+            className="block mobile-link"
+          >
+            Home →
+          </Link>
         </div>
-      )}
+      </div>
     </>
   );
 };

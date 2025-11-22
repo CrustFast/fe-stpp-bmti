@@ -23,7 +23,7 @@ export function HeroAksi() {
   }, []);
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center text-center overflow-hidden">
+    <section id="hero" className="relative h-screen w-full flex items-center justify-center text-center overflow-hidden">
       <Image
         src="/img/bg-1.jpg"
         alt="Laporan Gratifikasi"
