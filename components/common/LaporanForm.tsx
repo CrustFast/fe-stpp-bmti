@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { useEffect } from 'react';
 import React from 'react';
 import { FilePondUploader } from '@/components/ui/FilePondUploader';
+import { PUBLIC_API_BASE } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -115,11 +116,95 @@ const fasilitasOptions = [
   { value: 'bale-binangkit', label: 'Bale Binangkit' },
 ];
 
+const kategoriOptions = [
+  { value: 'SKM1', label: 'Kesesuaian persyaratan pelayanan' },
+  { value: 'SKM2', label: 'Kemudahan Prosedur' },
+  { value: 'SKM3', label: 'Kecepatan Pelayanan' },
+  { value: 'SKM4', label: 'Biaya/tarif pelayanan' },
+  { value: 'SKM5', label: 'Kesesuaian Produk' },
+  { value: 'SKM6', label: 'Perilaku Petugas' },
+  { value: 'SKM7', label: 'Kompetensi/kemampuan petugas' },
+  { value: 'SKM8', label: 'Penanganan Pengaduan' },
+  { value: 'SKM9', label: 'Kualitas sarana dan prasarana' },
+];
+
+const programKeahlianOptions = [
+  { value: '0', label: 'Tata Usaha dan Rumah Tangga' },
+  { value: '1', label: 'Teknik Sipil dan Perencanaan' },
+  { value: '2', label: 'Teknik Pemesinan' },
+  { value: '3', label: 'Elektronika dan Informatika' },
+  { value: '4', label: 'Ketenagalistrikan' },
+  { value: '5', label: 'Otomotif' },
+  { value: '6', label: 'Las dan Fabrikasi Logam' },
+  { value: '7', label: 'Teknik Energi Terbarukan' },
+  { value: '8', label: 'Pengajaran Umum' },
+  { value: '9', label: 'Perencanaan dan Penganggaran' },
+  { value: '10', label: 'Tata Laksana dan Kepegawaian' },
+  { value: '11', label: 'Penjaminan Mutu Pendidikan Vokasi' },
+  { value: '12', label: 'Fasilitas dan Peningkatan Kompetensi' },
+  { value: '13', label: 'Penyelarasan dan Kerja Sama DU/DI' },
+  { value: '14', label: 'Data Informasi Publikasi' },
+];
+
 export function LaporanForm() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      klasifikasi_laporan: undefined,
+      klasifikasi_laporan: null, 
+  
+      // PENGADUAN umum
+      tanggal_pengaduan: undefined,
+      jenis_layanan: undefined,
+      tipe: undefined,
+      kategori_pengaduan_id: undefined,
+      isi_laporan_pengaduan: '',
+      privasi: undefined,
+  
+      // Diklat
+      periode_diklat_mulai: undefined,
+      periode_diklat_akhir: undefined,
+      nama_diklat: '',
+      nama_peserta_diklat: '',
+      nomor_telepon_peserta_diklat: '',
+      asal_smk_peserta_diklat: '',
+      program_keahlian: '',
+  
+      // PKL
+      periode_magang_mulai: undefined,
+      periode_magang_akhir: undefined,
+      nama_peserta_pkl: '',
+      nomor_telepon_peserta_pkl: '',
+      asal_smk_peserta_pkl: '',
+      unit: '',
+  
+      // Pengguna fasilitas
+      tanggal_penggunaan_mulai: undefined,
+      tanggal_penggunaan_akhir: undefined,
+      nama_pengguna_fasilitas: '',
+      nomor_telepon_pengguna_fasilitas: '',
+      email_pengguna_fasilitas: '',
+      nama_fasilitas: '',
+  
+      // Masyarakat umum (kunjungan)
+      nama_masyarakat_umum: '',
+      nomor_telepon_masyarakat_umum: '',
+      email_masyarakat_umum: '',
+      alamat_masyarakat_umum: '',
+  
+      // Permintaan informasi
+      nama_peminta_informasi: '',
+      nomor_telepon_peminta_informasi: '',
+      email_peminta_informasi: '',
+      isi_laporan_permintaan_informasi: '',
+  
+      // Saran
+      nama_aduan_informasi: '',
+      nomor_telepon_aduan_saran: '',
+      email_aduan_saran: '',
+      isi_laporan_saran: '',
+  
+      // Lampiran
+      bukti_foto: [],
     },
   });
 
@@ -144,11 +229,112 @@ export function LaporanForm() {
     }
   }, [privasi, tipe, setValue, watch]);
 
-  function onSubmit(values: FormSchema) {
-    console.log(values);
-    toast.success('Laporan Terkirim!', {
-      description: 'Terima kasih atas laporan Anda.',
+  function toDateStr(d?: Date) {
+    return d ? format(d, 'yyyy-MM-dd') : undefined;
+  }
+
+  function fileToBase64(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const s = String(reader.result);
+        // kirim hanya string base64 (tanpa prefix data:)
+        resolve(s.includes(',') ? s.split(',')[1] : s);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
     });
+  }
+
+  function compact<T extends Record<string, unknown>>(obj: T): T {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([, v]) => v !== undefined && v !== '')
+    ) as T;
+  }
+
+  async function onSubmit(values: FormSchema) {
+    try {
+      const files = values.bukti_foto ?? [];
+      const bukti_foto_base64 = files.length
+        ? await Promise.all(files.map(fileToBase64))
+        : undefined;
+
+      const payload = compact({
+        // --- Umum ---
+        klasifikasi_laporan: values.klasifikasi_laporan!,
+        tanggal_pengaduan: toDateStr(values.tanggal_pengaduan),
+        jenis_layanan: values.jenis_layanan,
+        tipe: values.tipe,
+        kategori_pengaduan_id: values.kategori_pengaduan_id,
+        isi_laporan_pengaduan: values.isi_laporan_pengaduan,
+
+        // --- diklat ---
+        periode_diklat_mulai: toDateStr(values.periode_diklat_mulai),
+        periode_diklat_akhir: toDateStr(values.periode_diklat_akhir),
+        nama_diklat: values.nama_diklat,
+        nama_peserta_diklat: values.nama_peserta_diklat,
+        nomor_telepon_peserta_diklat: values.nomor_telepon_peserta_diklat,
+        asal_smk_peserta_diklat: values.asal_smk_peserta_diklat,
+        program_keahlian: values.program_keahlian, // backend validate:"numeric" (string angka)
+
+        // --- pkl ---
+        periode_magang_mulai: toDateStr(values.periode_magang_mulai),
+        periode_magang_akhir: toDateStr(values.periode_magang_akhir),
+        nama_peserta_pkl: values.nama_peserta_pkl,
+        nomor_telepon_peserta_pkl: values.nomor_telepon_peserta_pkl,
+        asal_smk_peserta_pkl: values.asal_smk_peserta_pkl,
+        unit: values.unit,
+
+        // --- pengguna fasilitas ---
+        tanggal_penggunaan_mulai: toDateStr(values.tanggal_penggunaan_mulai),
+        tanggal_penggunaan_akhir: toDateStr(values.tanggal_penggunaan_akhir),
+        nama_pengguna_fasilitas: values.nama_pengguna_fasilitas,
+        nomor_telepon_pengguna_fasilitas: values.nomor_telepon_pengguna_fasilitas,
+        email_pengguna_fasilitas: values.email_pengguna_fasilitas,
+        nama_fasilitas: values.nama_fasilitas,
+
+        // --- masyarakat umum ---
+        nama_masyarakat_umum: values.nama_masyarakat_umum,
+        nomor_telepon_masyarakat_umum: values.nomor_telepon_masyarakat_umum,
+        email_masyarakat_umum: values.email_masyarakat_umum,
+        alamat_masyarakat_umum: values.alamat_masyarakat_umum,
+
+        // --- permintaan informasi ---
+        nama_peminta_informasi: values.nama_peminta_informasi,
+        nomor_telepon_peminta_informasi: values.nomor_telepon_peminta_informasi,
+        email_peminta_informasi: values.email_peminta_informasi,
+        isi_laporan_permintaan_informasi: values.isi_laporan_permintaan_informasi,
+
+        // --- saran ---
+        nama_aduan_informasi: values.nama_aduan_informasi,
+        nomor_telepon_aduan_saran: values.nomor_telepon_aduan_saran,
+        email_aduan_saran: values.email_aduan_saran,
+        isi_laporan_saran: values.isi_laporan_saran,
+
+        // --- lampiran & privasi ---
+        privasi: values.privasi,
+        bukti_foto_base64,
+      });
+
+      const res = await fetch(`${PUBLIC_API_BASE}/api/laporan/dumas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || (json && json.success === false)) {
+        throw new Error(json?.message || 'Gagal mengirim laporan');
+      }
+
+      toast.success('Laporan Terkirim!', {
+        description: 'Terima kasih atas laporan Anda.',
+      });
+      form.reset();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      toast.error('Gagal mengirim laporan', { description: message });
+    }
   }
 
   return (
@@ -315,8 +501,11 @@ export function LaporanForm() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="1">Kategori 1</SelectItem>
-                          <SelectItem value="2">Kategori 2</SelectItem>
+                          {kategoriOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -344,7 +533,7 @@ export function LaporanForm() {
                         <SelectField
                           label="Program Keahlian"
                           placeholder="Pilih Program Keahlian"
-                          options={[{ value: '1', label: 'Teknik Komputer' }]}
+                          options={programKeahlianOptions}
                           className="sm:col-span-2 mt-6"
                           {...field}
                         />
@@ -375,6 +564,7 @@ export function LaporanForm() {
                   </>
                 ) : tipe === 'kunjungan' ? (
                   <>
+                    <PrivasiRadio control={form.control} className="sm:col-span-2 mt-2" />
                     <FormField
                       control={form.control}
                       name="nama_masyarakat_umum"
@@ -519,8 +709,12 @@ export function LaporanForm() {
           </div>
 
           <div className="mt-10">
-            <Button type="submit" className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer">
-              {klasifikasi === 'pengaduan' ? 'ADUKAN!' : 'KIRIM!'}
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? 'Mengirim...' : (klasifikasi === 'pengaduan' ? 'ADUKAN!' : 'KIRIM!')}
             </Button>
           </div>
         </form>
