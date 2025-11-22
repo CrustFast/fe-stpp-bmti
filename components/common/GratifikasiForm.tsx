@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
+import { FilePondUploader } from '@/components/ui/FilePondUploader';
 
 const jenisLaporanOptions = ['penerimaan', 'penolakan'] as const;
 
@@ -55,9 +56,18 @@ const formSchema = z.object({
   objek_gratifikasi: z.string().min(1, 'Objek gratifikasi wajib diisi.'),
   kronologi: z.string().min(1, 'Kronologi wajib diisi.'),
   bukti_files: z
-    .array(z.instanceof(File))
+    .array(
+      z
+        .instanceof(File)
+        .refine(
+          f =>
+            /^(image\/.*|application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document)$/.test(
+              f.type
+            ),
+          'Format file tidak didukung.'
+        )
+    )
     .min(1, 'Minimal 1 file bukti harus diunggah.')
-    .optional(),
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -67,6 +77,7 @@ export function GratifikasiForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       jenis_laporan: undefined,
+      bukti_files: [],
     },
   });
 
@@ -238,23 +249,24 @@ export function GratifikasiForm() {
             <FormField
               control={form.control}
               name="bukti_files"
-              render={() => (
+              render={({ field }) => (
                 <FormItem className="sm:col-span-2 mt-2">
                   <FormLabel>
                     Foto(Bukti) / Dokumen <span className="text-red-600">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      multiple
-                      accept="image/*,.pdf,.doc,.docx"
-                      className="w-full"
-                      onChange={(e) =>
-                        form.setValue(
-                          'bukti_files',
-                          e.target.files ? Array.from(e.target.files) : []
-                        )
-                      }
+                    <FilePondUploader
+                      control={form.control}
+                      name="bukti_files"
+                      helperText="Minimal 1 file. Maks 10 file. Format: Gambar / PDF / DOC / DOCX"
+                      maxFiles={10}
+                      allowMultiple
+                      acceptedFileTypes={[
+                        'image/*',
+                        'application/pdf',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                      ]}
                     />
                   </FormControl>
                   <FormMessage />
