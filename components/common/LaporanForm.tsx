@@ -535,6 +535,7 @@ export function LaporanForm() {
                           placeholder="Pilih Program Keahlian"
                           options={programKeahlianOptions}
                           className="sm:col-span-2 mt-6"
+                          contentClassName="max-h-64 overflow-y-auto" // scroll internal
                           {...field}
                         />
                       )}
@@ -766,9 +767,22 @@ interface SelectFieldProps extends Omit<ControllerRenderProps<FieldValues, strin
   placeholder: string;
   options: SelectOption[];
   className?: string;
+  contentClassName?: string; 
 }
 
-function SelectField({ label, placeholder, options, className, onChange, value }: SelectFieldProps) {
+function SelectField({ label, placeholder, options, className, onChange, value, contentClassName }: SelectFieldProps) {
+  const handleWheel: React.WheelEventHandler<HTMLDivElement> = (e) => {
+    const el = e.currentTarget;
+    const canScroll = el.scrollHeight > el.clientHeight;
+    if (!canScroll) return;
+    const atTop = el.scrollTop === 0;
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight;
+
+    if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <FormItem className={className}>
       <FormLabel>{label}</FormLabel>
@@ -778,7 +792,10 @@ function SelectField({ label, placeholder, options, className, onChange, value }
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
         </FormControl>
-        <SelectContent>
+        <SelectContent
+          className={cn('max-h-56 overflow-y-auto', contentClassName)}
+          onWheel={handleWheel}
+        >
           {options.map((opt) => (
             <SelectItem key={opt.value} value={opt.value}>
               {opt.label}

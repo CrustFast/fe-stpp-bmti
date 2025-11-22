@@ -6,6 +6,7 @@ import Link from 'next/link';
 import gsap from 'gsap';
 import { useLenis } from 'lenis/react';
 import { Menu, X } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,6 +15,7 @@ const Navbar: React.FC = () => {
 
   const lenis = useLenis();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const blueZoneIds = ['laporanForm'];
@@ -209,11 +211,17 @@ const Navbar: React.FC = () => {
           </Link>
 
           <Link
-            href="#laporanForm"
-            onClick={(e) => smoothScrollTo(e, '#laporanForm')}
-            className="relative text-sm font-semibold hover:text-gray-200 transition-colors"
-            onMouseEnter={(e) => handleHover(e, true)}
-            onMouseLeave={(e) => handleHover(e, false)}
+            href="/eksternal"
+            onClick={(e) => {
+              if (pathname === '/eksternal') {
+                e.preventDefault();
+                sessionStorage.setItem('goToLaporanForm', '1');
+                smoothScrollTo(e, '#laporanForm');
+              } else {
+                sessionStorage.setItem('goToLaporanForm', '1');
+              }
+            }}
+            className="relative text-sm font-semibold"
           >
             Formulir Aduan
             <span className="underline-bar block h-1 w-10 bg-white rounded-full mt-1 mx-auto transform-gpu origin-center scale-x-0"></span>

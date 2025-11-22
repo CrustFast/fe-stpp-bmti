@@ -16,7 +16,7 @@ export function LayananInformasi() {
   }, []);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
+    <section id="hero" className="relative h-screen w-full overflow-hidden">
       <div className="absolute inset-0 bg-[#208AEB]" />
 
       <div className="relative z-10 mx-auto max-w-7xl h-full px-6 lg:px-8 py-24 sm:py-32">
