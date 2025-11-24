@@ -26,9 +26,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Control, ControllerRenderProps, FieldValues } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 
 const klasifikasiOptions = ['pengaduan', 'permintaan-informasi', 'saran'] as const;
 
@@ -146,6 +147,19 @@ const programKeahlianOptions = [
   { value: '14', label: 'Data Informasi Publikasi' },
 ];
 
+const DATE_FIELDS: (keyof FormSchema)[] = [
+  'tanggal_pengaduan',
+  'periode_diklat_mulai',
+  'periode_diklat_akhir',
+  'periode_magang_mulai',
+  'periode_magang_akhir',
+  'tanggal_penggunaan_mulai',
+  'tanggal_penggunaan_akhir',
+];
+
+const DRAFT_KEY = 'laporanForm:draft';
+const LAST_PATH_KEY = 'laporanForm:lastPath';
+
 export function LaporanForm() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
@@ -208,12 +222,63 @@ export function LaporanForm() {
     },
   });
 
+  const router = useRouter();
+
   const { watch, setValue } = form;
   const klasifikasi = watch('klasifikasi_laporan');
   const jenisLayanan = watch('jenis_layanan');
   const tipe = watch('tipe');
   const privasi = watch('privasi');
   const [openTanggalPengaduan, setOpenTanggalPengaduan] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null;
+      if (raw) {
+        const data = JSON.parse(raw) as Partial<Record<keyof FormSchema, unknown>>;
+        DATE_FIELDS.forEach(f => {
+          const v = data[f];
+          if (typeof v === 'string') {
+            const d = new Date(v);
+            if (!isNaN(d.getTime())) {
+              data[f] = d; 
+            }
+          }
+        });
+        form.reset({ ...form.getValues(), ...(data as Partial<FormSchema>) });
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [form]);
+
+  //autosave form
+  React.useEffect(() => {
+    type DraftData = {
+      [K in keyof FormSchema]:
+        FormSchema[K] extends Date | undefined ? string | undefined : FormSchema[K];
+    };
+    const sub = watch(values => {
+      try {
+        const draft: DraftData = Object.fromEntries(
+          Object.entries(values).map(([k, v]) => {
+            if (
+              DATE_FIELDS.includes(k as keyof FormSchema) &&
+              v instanceof Date
+            ) {
+              return [k, v.toISOString()];
+            }
+            return [k, v];
+          })
+        ) as DraftData;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        localStorage.setItem(LAST_PATH_KEY, window.location.pathname);
+      } catch {
+        /* ignore */
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [watch]);
 
   useEffect(() => {
     setValue('tipe', undefined);
@@ -238,7 +303,6 @@ export function LaporanForm() {
       const reader = new FileReader();
       reader.onload = () => {
         const s = String(reader.result);
-        // kirim hanya string base64 (tanpa prefix data:)
         resolve(s.includes(',') ? s.split(',')[1] : s);
       };
       reader.onerror = reject;
@@ -327,13 +391,17 @@ export function LaporanForm() {
         throw new Error(json?.message || 'Gagal mengirim laporan');
       }
 
-      toast.success('Laporan Terkirim!', {
-        description: 'Terima kasih atas laporan Anda.',
-      });
+      toast.success('Laporan Terkirim!', { description: 'Mengalihkan ke halaman sukses...' });
       form.reset();
+      //untuk membersihkan draft setelah sukses
+      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(LAST_PATH_KEY);
+      router.push('/success');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan';
       toast.error('Gagal mengirim laporan', { description: message });
+      const q = new URLSearchParams({ error: message }).toString();
+      router.push(`/failed?${q}`);
     }
   }
 
@@ -535,7 +603,7 @@ export function LaporanForm() {
                           placeholder="Pilih Program Keahlian"
                           options={programKeahlianOptions}
                           className="sm:col-span-2 mt-6"
-                          contentClassName="max-h-64 overflow-y-auto" // scroll internal
+                          contentClassName="max-h-64 overflow-y-auto"
                           {...field}
                         />
                       )}
@@ -715,7 +783,12 @@ export function LaporanForm() {
               className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
               disabled={form.formState.isSubmitting}
             >
-              {form.formState.isSubmitting ? 'Mengirim...' : (klasifikasi === 'pengaduan' ? 'ADUKAN!' : 'KIRIM!')}
+              {form.formState.isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="sr-only">Mengirim...</span>
+                </span>
+              ) : (klasifikasi === 'pengaduan' ? 'ADUKAN!' : 'KIRIM!')}
             </Button>
           </div>
         </form>
