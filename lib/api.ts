@@ -1,4 +1,3 @@
-// lib/api.ts
 export const API_URL = process.env.NODE_ENV === "production"
   ? "https://fe-stpp-bmti.vercel.app"
   : "http://localhost:8080";

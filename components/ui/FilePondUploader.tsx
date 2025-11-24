@@ -1,7 +1,6 @@
 'use client';
 
 import { FilePond, registerPlugin } from 'react-filepond';
-import type { FilePondProps } from 'react-filepond';
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
@@ -12,55 +11,13 @@ import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 registerPlugin(
   FilePondPluginImageExifOrientation,
   FilePondPluginImagePreview,
-  FilePondPluginFileValidateType
+  FilePondPluginFileValidateType,
 );
 
 import { useController, type UseControllerProps } from 'react-hook-form';
 import type { FieldValues } from 'react-hook-form';
-
-type ServerConfig = FilePondProps['server'];
-
-const defaultServer: ServerConfig = {
-  process: (fieldName, file, _metadata, load, error, progress, abort) => {
-    const formData = new FormData();
-    formData.append(fieldName, file as Blob);
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/api/upload');
-
-    xhr.upload.onprogress = (e) => {
-      progress(e.lengthComputable, e.loaded, e.total);
-    };
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState === 4) {
-        if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const json = JSON.parse(xhr.responseText);
-              load(json.id || json.name || Date.now().toString());
-            } catch {
-              load(Date.now().toString());
-            }
-        } else {
-          error('Upload gagal');
-        }
-      }
-    };
-    xhr.onerror = () => error('Network error');
-    xhr.send(formData);
-
-    return {
-      abort: () => {
-        xhr.abort();
-        abort();
-      },
-    };
-  },
-  revert: (uniqueFileId, load, error) => {
-    fetch(`/api/upload/${uniqueFileId}`, { method: 'DELETE' })
-      .then(() => load())
-      .catch(() => error('Gagal revert'));
-  },
-};
+import { useRef } from 'react';
+import type { FilePond as FilePondCore } from 'filepond';
 
 export function FilePondUploader<T extends FieldValues>({
   control,
@@ -68,40 +25,77 @@ export function FilePondUploader<T extends FieldValues>({
   label,
   helperText,
   maxFiles = 10,
-  acceptedFileTypes = ['image/*', 'application/pdf'],
   allowMultiple = true,
-  server,
+  acceptedFileTypes,
 }: {
   control: UseControllerProps<T>['control'];
   name: UseControllerProps<T>['name'];
   label?: string;
   helperText?: string;
   maxFiles?: number;
-  acceptedFileTypes?: string[];
   allowMultiple?: boolean;
-  server?: ServerConfig;
+  acceptedFileTypes?: string[];
 }) {
   const {
-    field: { onChange },
+    field: { value, onChange },
     fieldState: { error },
   } = useController({ name, control });
+
+  const pondRef = useRef<FilePondCore | null>(null);
 
   return (
     <div className="space-y-2">
       {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
       <FilePond
+        ref={(instance) => {
+          pondRef.current = instance as FilePondCore | null;
+        }}
+        files={(value as File[] | undefined) ?? []}
+        onupdatefiles={(items) => {
+          const files = items.map(i => i.file as File).filter(Boolean);
+          onChange(files);
+        }}
         allowMultiple={allowMultiple}
         maxFiles={maxFiles}
-        acceptedFileTypes={acceptedFileTypes}
-        name={name}
-        server={server || defaultServer}
-        instantUpload
-        onupdatefiles={(items) => {
-          onChange(items.map(i => i.file as File));
+        acceptedFileTypes={acceptedFileTypes ?? [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'application/pdf'
+        ]}
+        server={{
+          process: (_fieldName, file, _metadata, load, error, progress, abort) => {
+            const total = file.size || 1;
+            let uploaded = 0;
+            const speed = Math.max(50_000, total / 40); 
+            const interval = setInterval(() => {
+              uploaded = Math.min(uploaded + speed, total);
+              progress(true, uploaded, total); 
+              if (uploaded >= total) {
+                clearInterval(interval);
+                load(file.name); 
+              }
+            }, 100);
+            return {
+              abort: () => {
+                clearInterval(interval);
+                abort();
+              }
+            };
+          },
+          revert: (_serverFileId, load) => {
+            load(); 
+          }
         }}
-        labelIdle='Tarik & letakkan foto / PDF di sini atau <span class="filepond--label-action">Pilih File</span>'
+        instantUpload={true}      
+        allowProcess={true}
+        storeAsFile
         credits={false}
-        allowReorder
+        labelIdle='Tarik & letakkan foto/PDF atau <span class="filepond--label-action">Pilih File</span>'
+        labelFileProcessing='Mengupload...'
+        labelFileProcessingComplete='Selesai'
+        labelFileProcessingAborted='Dibatalkan'
+        labelFileProcessingError='Gagal'
       />
       {helperText && <p className="text-xs text-gray-500">{helperText}</p>}
       {error && <p className="text-xs text-red-600">{error.message}</p>}
