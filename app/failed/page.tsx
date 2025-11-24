@@ -1,13 +1,15 @@
 'use client';
 
+import React, { Suspense } from 'react';
 import Link from 'next/link';
-import React from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { AnimationItem } from 'lottie-web';
 
+export const dynamic = 'force-dynamic';
+
 const LAST_PATH_KEY = 'laporanForm:lastPath';
 
-export default function FailedPage() {
+function FailedContent() {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const params = useSearchParams();
   const router = useRouter();
@@ -75,5 +77,13 @@ export default function FailedPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function FailedPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen flex items-center justify-center bg-[#cd472f] text-white">Memuat...</main>}>
+      <FailedContent />
+    </Suspense>
   );
 }
