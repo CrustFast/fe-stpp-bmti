@@ -94,6 +94,7 @@ const formSchema = z.object({
   privasi: z.enum(['anonim', 'rahasia']).optional(),
 
   bukti_foto: z.array(z.instanceof(File).refine(f => /^(image\/.*|application\/pdf)$/.test(f.type), 'Hanya gambar atau PDF')).max(10).optional(),
+  bukti_foto_ids: z.array(z.string()).max(10).optional()
 });
 
 type FormSchema = z.infer<typeof formSchema>;
@@ -164,8 +165,8 @@ export function LaporanForm() {
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      klasifikasi_laporan: null, 
-  
+      klasifikasi_laporan: null,
+
       // PENGADUAN umum
       tanggal_pengaduan: undefined,
       jenis_layanan: undefined,
@@ -173,7 +174,7 @@ export function LaporanForm() {
       kategori_pengaduan_id: undefined,
       isi_laporan_pengaduan: '',
       privasi: undefined,
-  
+
       // Diklat
       periode_diklat_mulai: undefined,
       periode_diklat_akhir: undefined,
@@ -182,7 +183,7 @@ export function LaporanForm() {
       nomor_telepon_peserta_diklat: '',
       asal_smk_peserta_diklat: '',
       program_keahlian: '',
-  
+
       // PKL
       periode_magang_mulai: undefined,
       periode_magang_akhir: undefined,
@@ -190,7 +191,7 @@ export function LaporanForm() {
       nomor_telepon_peserta_pkl: '',
       asal_smk_peserta_pkl: '',
       unit: '',
-  
+
       // Pengguna fasilitas
       tanggal_penggunaan_mulai: undefined,
       tanggal_penggunaan_akhir: undefined,
@@ -198,25 +199,25 @@ export function LaporanForm() {
       nomor_telepon_pengguna_fasilitas: '',
       email_pengguna_fasilitas: '',
       nama_fasilitas: '',
-  
+
       // Masyarakat umum (kunjungan)
       nama_masyarakat_umum: '',
       nomor_telepon_masyarakat_umum: '',
       email_masyarakat_umum: '',
       alamat_masyarakat_umum: '',
-  
+
       // Permintaan informasi
       nama_peminta_informasi: '',
       nomor_telepon_peminta_informasi: '',
       email_peminta_informasi: '',
       isi_laporan_permintaan_informasi: '',
-  
+
       // Saran
       nama_aduan_informasi: '',
       nomor_telepon_aduan_saran: '',
       email_aduan_saran: '',
       isi_laporan_saran: '',
-  
+
       // Lampiran
       bukti_foto: [],
     },
@@ -241,7 +242,7 @@ export function LaporanForm() {
           if (typeof v === 'string') {
             const d = new Date(v);
             if (!isNaN(d.getTime())) {
-              data[f] = d; 
+              data[f] = d;
             }
           }
         });
@@ -256,7 +257,7 @@ export function LaporanForm() {
   React.useEffect(() => {
     type DraftData = {
       [K in keyof FormSchema]:
-        FormSchema[K] extends Date | undefined ? string | undefined : FormSchema[K];
+      FormSchema[K] extends Date | undefined ? string | undefined : FormSchema[K];
     };
     const sub = watch(values => {
       try {
@@ -279,6 +280,16 @@ export function LaporanForm() {
     });
     return () => sub.unsubscribe();
   }, [watch]);
+
+  // Hapus draft saat browser ditutup/refresh
+  React.useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.removeItem(DRAFT_KEY);
+      localStorage.removeItem(LAST_PATH_KEY);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
 
   useEffect(() => {
     setValue('tipe', undefined);
@@ -316,23 +327,29 @@ export function LaporanForm() {
     ) as T;
   }
 
-  async function onSubmit(values: FormSchema) {
-    try {
-      const files = values.bukti_foto ?? [];
-      const bukti_foto_base64 = files.length
-        ? await Promise.all(files.map(fileToBase64))
-        : undefined;
+  interface LaporanResponse {
+    success?: boolean;
+    message?: string;
+    [k: string]: unknown;
+  }
 
+  async function onSubmit(values: FormSchema) {
+    const fd = new FormData();
+
+    const put = (k: string, v?: unknown) => {
+      if (v === undefined || v === '') return;
+      fd.append(k, String(v));
+    };
+
+    try {
       const payload = compact({
-        // --- Umum ---
-        klasifikasi_laporan: values.klasifikasi_laporan!,
+        // gunakan hasil normalisasi
+        klasifikasi_laporan: values.klasifikasi_laporan!, // langsung kirim tanpa normalisasi
         tanggal_pengaduan: toDateStr(values.tanggal_pengaduan),
         jenis_layanan: values.jenis_layanan,
         tipe: values.tipe,
         kategori_pengaduan_id: values.kategori_pengaduan_id,
         isi_laporan_pengaduan: values.isi_laporan_pengaduan,
-
-        // --- diklat ---
         periode_diklat_mulai: toDateStr(values.periode_diklat_mulai),
         periode_diklat_akhir: toDateStr(values.periode_diklat_akhir),
         nama_diklat: values.nama_diklat,
@@ -340,68 +357,60 @@ export function LaporanForm() {
         nomor_telepon_peserta_diklat: values.nomor_telepon_peserta_diklat,
         asal_smk_peserta_diklat: values.asal_smk_peserta_diklat,
         program_keahlian: values.program_keahlian,
-
-        // --- pkl ---
         periode_magang_mulai: toDateStr(values.periode_magang_mulai),
         periode_magang_akhir: toDateStr(values.periode_magang_akhir),
         nama_peserta_pkl: values.nama_peserta_pkl,
         nomor_telepon_peserta_pkl: values.nomor_telepon_peserta_pkl,
         asal_smk_peserta_pkl: values.asal_smk_peserta_pkl,
         unit: values.unit,
-
-        // --- pengguna fasilitas ---
         tanggal_penggunaan_mulai: toDateStr(values.tanggal_penggunaan_mulai),
         tanggal_penggunaan_akhir: toDateStr(values.tanggal_penggunaan_akhir),
         nama_pengguna_fasilitas: values.nama_pengguna_fasilitas,
         nomor_telepon_pengguna_fasilitas: values.nomor_telepon_pengguna_fasilitas,
         email_pengguna_fasilitas: values.email_pengguna_fasilitas,
         nama_fasilitas: values.nama_fasilitas,
-
-        // --- masyarakat umum ---
         nama_masyarakat_umum: values.nama_masyarakat_umum,
         nomor_telepon_masyarakat_umum: values.nomor_telepon_masyarakat_umum,
         email_masyarakat_umum: values.email_masyarakat_umum,
         alamat_masyarakat_umum: values.alamat_masyarakat_umum,
-
-        // --- permintaan informasi ---
         nama_peminta_informasi: values.nama_peminta_informasi,
         nomor_telepon_peminta_informasi: values.nomor_telepon_peminta_informasi,
         email_peminta_informasi: values.email_peminta_informasi,
         isi_laporan_permintaan_informasi: values.isi_laporan_permintaan_informasi,
-
-        // --- saran ---
         nama_aduan_informasi: values.nama_aduan_informasi,
         nomor_telepon_aduan_saran: values.nomor_telepon_aduan_saran,
         email_aduan_saran: values.email_aduan_saran,
         isi_laporan_saran: values.isi_laporan_saran,
-
-        // --- lampiran & privasi ---
         privasi: values.privasi,
-        bukti_foto_base64,
       });
 
-      const res = await fetch(`${PUBLIC_API_BASE}/api/laporan/dumas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      Object.entries(payload).forEach(([k, v]) => put(k, v));
 
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || (json && json.success === false)) {
-        throw new Error(json?.message || 'Gagal mengirim laporan');
+      if (values.bukti_foto_ids?.length) {
+        fd.append('bukti_foto_ids', JSON.stringify(values.bukti_foto_ids));
       }
 
+      // DEBUG: pastikan nilai terkirim
+      console.log('Payload:', payload);
+      console.log('fd klasifikasi_laporan =', fd.get('klasifikasi_laporan'));
+
+      const res = await fetch(`${PUBLIC_API_BASE}/api/laporan/dumas`, { method: 'POST', body: fd });
+      const text = await res.text();
+      let parsed: LaporanResponse | null = null;
+      if (text.startsWith('{')) { try { parsed = JSON.parse(text) as LaporanResponse; } catch { } }
+      if (!res.ok || (parsed && parsed.success === false)) {
+        console.error('Submit error:', res.status, text);
+        throw new Error(parsed?.message || (res.status === 400 ? 'Bad Request' : 'Gagal mengirim laporan'));
+      }
       toast.success('Laporan Terkirim!', { description: 'Mengalihkan ke halaman sukses...' });
       form.reset();
-      //untuk membersihkan draft setelah sukses
       localStorage.removeItem(DRAFT_KEY);
       localStorage.removeItem(LAST_PATH_KEY);
       router.push('/success');
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Terjadi kesalahan';
       toast.error('Gagal mengirim laporan', { description: message });
-      const q = new URLSearchParams({ error: message }).toString();
-      router.push(`/failed?${q}`);
+      router.push(`/failed?${new URLSearchParams({ error: message })}`);
     }
   }
 
@@ -430,6 +439,7 @@ export function LaporanForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
+                      value={field.value ?? undefined}
                       className="flex flex-col sm:flex-row gap-x-3 gap-y-3 mb-4 pb-2 items-start sm:items-center sm:justify-center text-left"
                     >
                       <FormItem className="flex items-center space-x-3 space-y-0">
@@ -755,14 +765,14 @@ export function LaporanForm() {
               <div className="col-span-full">
                 <FormField
                   control={form.control}
-                  name="bukti_foto"
+                  name="bukti_foto_ids"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Foto Sebagai Bukti Pendukung (opsional)</FormLabel>
                       <FormControl>
                         <FilePondUploader
                           control={form.control}
-                          name="bukti_foto"
+                          name="bukti_foto_ids"
                           helperText="Maksimal 10 file, format JPG/PNG/WebP atau PDF"
                           maxFiles={10}
                           allowMultiple
@@ -840,7 +850,7 @@ interface SelectFieldProps extends Omit<ControllerRenderProps<FieldValues, strin
   placeholder: string;
   options: SelectOption[];
   className?: string;
-  contentClassName?: string; 
+  contentClassName?: string;
 }
 
 function SelectField({ label, placeholder, options, className, onChange, value, contentClassName }: SelectFieldProps) {
