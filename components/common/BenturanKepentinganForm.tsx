@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import type { Control } from 'react-hook-form';
+import type { Control, FieldError } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -25,6 +25,8 @@ import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '@/components/ui/select';
 import { FilePondUploader } from '@/components/ui/FilePondUploader';
+import { submitLaporanBenturan } from '@/app/laporan/dumas/action';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
   // 1. Informasi Pelapor
@@ -52,17 +54,7 @@ const formSchema = z.object({
   kronologi_kejadian: z.string().min(1, 'Kronologi kejadian wajib diisi.'),
 
   bukti_files: z
-    .array(
-      z
-        .instanceof(File)
-        .refine(
-          f =>
-            /^(image\/.*|video\/.*|application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document)$/.test(
-              f.type
-            ),
-          'Format file tidak didukung.'
-        )
-    )
+    .array(z.string())
     .min(1, 'Minimal 1 file bukti harus diunggah.')
 });
 
@@ -98,6 +90,8 @@ export function BenturanKepentinganForm({
     },
   });
 
+  const router = useRouter();
+
   const [openTanggalPenerimaan, setOpenTanggalPenerimaan] = React.useState(false);
   const [openTanggalDilaporkan, setOpenTanggalDilaporkan] = React.useState(false);
 
@@ -105,13 +99,61 @@ export function BenturanKepentinganForm({
     Object.keys(form.formState.errors).length > 0 && form.formState.isSubmitted;
 
   async function handleSubmit(values: BenturanFormSchema) {
-    if (onSubmit) await onSubmit(values);
-    else {
-      console.log(values);
+    if (onSubmit) {
+      await onSubmit(values);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+
+      formData.append('nama_pelapor', values.nama_pelapor);
+      formData.append('jabatan', values.jabatan);
+      formData.append('nomor_telepon', values.nomor_telepon);
+      formData.append('email_pelapor', values.email_pelapor);
+      formData.append('nama_pihak_terlibat', values.nama_pihak_terlibat);
+      formData.append('jabatan_pihak_terlibat', values.jabatan_pihak_terlibat);
+      formData.append('program_keahlian_id', values.program_keahlian_id);
+      formData.append('tempat_kejadian', values.tempat_kejadian);
+      formData.append('jenis_benturan_id', values.jenis_benturan_id);
+      formData.append('kronologi_kejadian', values.kronologi_kejadian);
+
+      if (values.tanggal_penerimaan_penolakan) {
+        formData.append(
+          'tanggal_penerimaan_penolakan',
+          format(values.tanggal_penerimaan_penolakan, 'yyyy-MM-dd')
+        );
+      }
+      if (values.tanggal_dilaporkan) {
+        formData.append(
+          'tanggal_dilaporkan',
+          format(values.tanggal_dilaporkan, 'yyyy-MM-dd')
+        );
+      }
+
+      if (values.bukti_files && values.bukti_files.length > 0) {
+        formData.append('bukti_files_ids', JSON.stringify(values.bukti_files));
+      }
+
+      await submitLaporanBenturan(formData);
+
       toast.success('Laporan Benturan Kepentingan Terkirim!', {
         description: 'Terima kasih atas laporan Anda.',
       });
       form.reset();
+      router.push('/success');
+    } catch (error: unknown) {
+      console.error(error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : 'Terjadi kesalahan saat mengirim data.';
+      toast.error('Gagal mengirim laporan', {
+        description: message,
+      });
+      router.push(`/failed?${new URLSearchParams({ error: message })}`);
     }
   }
 
@@ -354,21 +396,22 @@ export function BenturanKepentinganForm({
                 Anda belum mengisi semua data yang diperlukan. Silakan lengkapi dan coba lagi.
               </p>
               <ul className="list-disc ps-5 space-y-1">
-                {Object.values(form.formState.errors).map((err, i) => (
-                  <li key={i}>{err.message}</li>
+                {(Object.values(form.formState.errors) as FieldError[]).map((err, i) => (
+                  <li key={i}>{err?.message}</li>
                 ))}
               </ul>
             </div>
           )}
 
-            <div className="mt-10">
-              <Button
-                type="submit"
-                className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
-              >
-                KIRIM!
-              </Button>
-            </div>
+          <div className="mt-10">
+            <Button
+              type="submit"
+              className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? 'Mengirim...' : 'KIRIM!'}
+            </Button>
+          </div>
         </form>
       </Form>
     </div>
@@ -464,15 +507,15 @@ function TextInput({
           <FormLabel>
             {label} {required && <span className="text-red-600">*</span>}
           </FormLabel>
-            <FormControl>
-              <Input
-                type={type}
-                placeholder={placeholder ?? ' '}
-                className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:text-blue-500"
-                {...field}
-                value={field.value as string}
-              />
-            </FormControl>
+          <FormControl>
+            <Input
+              type={type}
+              placeholder={placeholder ?? ' '}
+              className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-0 focus:text-blue-500"
+              {...field}
+              value={field.value as string}
+            />
+          </FormControl>
           <FormMessage />
         </FormItem>
       )}
