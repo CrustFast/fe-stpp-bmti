@@ -8,18 +8,29 @@ export const API_URL =
     : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 export async function submitLaporanDumas(formData: FormData) {
-  console.log("Mengirim ke backend:", API_URL + "/api/laporan/dumas");
-  console.log("Data yang dikirim:");
-  for (const [key, value] of formData.entries()) {
-    if (value instanceof File && value.size > 0) {
-      console.log(`  ${key}: ${value.name} (${value.size} bytes)`);
-    } else {
-      console.log(`  ${key}: ${value}`);
-    }
+  const klasifikasi = formData.get('klasifikasi_laporan');
+
+  let endpointPath = "/api/laporan/pengaduan";
+  if (klasifikasi === 'permintaan-informasi' || klasifikasi === 'permintaan_informasi') {
+    endpointPath = "/api/laporan/permintaan-informasi";
+  } else if (klasifikasi === 'saran') {
+    endpointPath = "/api/laporan/saran";
   }
 
+  console.log("Mengirim ke backend:", API_URL + endpointPath);
+
+  // console.log("Mengirim ke backend:", API_URL + "/api/laporan/dumas");
+  // console.log("Data yang dikirim:");
+  // for (const [key, value] of formData.entries()) {
+  //   if (value instanceof File && value.size > 0) {
+  //     console.log(`  ${key}: ${value.name} (${value.size} bytes)`);
+  //   } else {
+  //     console.log(`  ${key}: ${value}`);
+  //   }
+  // }
+
   const startTime = Date.now();
-  const res = await fetch(`${API_URL}/api/laporan/dumas`, {
+  const res = await fetch(`${API_URL}${endpointPath}`, {
     method: "POST",
     body: formData,
     cache: "no-store",

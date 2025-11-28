@@ -394,7 +394,14 @@ export function LaporanForm() {
       console.log('Payload:', payload);
       console.log('fd klasifikasi_laporan =', fd.get('klasifikasi_laporan'));
 
-      const res = await fetch(`${PUBLIC_API_BASE}/api/laporan/dumas`, { method: 'POST', body: fd });
+      let endpoint = '/api/laporan/pengaduan'; // Default
+      if (values.klasifikasi_laporan === 'permintaan-informasi') {
+        endpoint = '/api/laporan/permintaan-informasi';
+      } else if (values.klasifikasi_laporan === 'saran') {
+        endpoint = '/api/laporan/saran';
+      }
+
+      const res = await fetch(`${PUBLIC_API_BASE}${endpoint}`, { method: 'POST', body: fd });
       const text = await res.text();
       let parsed: LaporanResponse | null = null;
       if (text.startsWith('{')) { try { parsed = JSON.parse(text) as LaporanResponse; } catch { } }
