@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import type { Control } from 'react-hook-form';
+import type { Control, FieldError } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -25,6 +25,8 @@ import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { FilePondUploader } from '@/components/ui/FilePondUploader';
+import { submitLaporanGratifikasi } from '@/app/laporan/dumas/action';
+import { useRouter } from 'next/navigation';
 
 const jenisLaporanOptions = ['penerimaan', 'penolakan'] as const;
 
@@ -56,28 +58,29 @@ const formSchema = z.object({
   objek_gratifikasi: z.string().min(1, 'Objek gratifikasi wajib diisi.'),
   kronologi: z.string().min(1, 'Kronologi wajib diisi.'),
   bukti_files: z
-    .array(
-      z
-        .instanceof(File)
-        .refine(
-          f =>
-            /^(image\/.*|application\/pdf|application\/msword|application\/vnd.openxmlformats-officedocument.wordprocessingml.document)$/.test(
-              f.type
-            ),
-          'Format file tidak didukung.'
-        )
-    )
+    .array(z.string())
     .min(1, 'Minimal 1 file bukti harus diunggah.')
 });
 
 type FormSchema = z.infer<typeof formSchema>;
 
 export function GratifikasiForm() {
+  const router = useRouter();
   const form = useForm<FormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       jenis_laporan: undefined,
+      nama_pelapor: '',
+      jabatan: '',
+      nomor_telepon: '',
+      email: '',
+      nama_pemberi: '',
+      hubungan: '',
+      objek_gratifikasi: '',
+      kronologi: '',
       bukti_files: [],
+      tanggal_penerimaan_penolakan: undefined,
+      tanggal_dilaporkan: undefined,
     },
   });
 
@@ -87,12 +90,57 @@ export function GratifikasiForm() {
 
   const [openTanggalUtama, setOpenTanggalUtama] = React.useState(false);
   const [openTanggalDilaporkan, setOpenTanggalDilaporkan] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  function onSubmit(values: FormSchema) {
-    console.log(values);
-    toast.success('Laporan Gratifikasi Terkirim!', {
-      description: 'Terima kasih atas laporan Anda.',
-    });
+  async function onSubmit(values: FormSchema) {
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+
+      formData.append('jenis_laporan', values.jenis_laporan || '');
+      formData.append('nama_pelapor', values.nama_pelapor);
+      formData.append('jabatan', values.jabatan);
+      formData.append('nomor_telepon', values.nomor_telepon);
+      formData.append('email', values.email);
+      formData.append('nama_pemberi', values.nama_pemberi);
+      formData.append('hubungan', values.hubungan);
+      formData.append('objek_gratifikasi', values.objek_gratifikasi);
+      formData.append('kronologi', values.kronologi);
+
+      if (values.tanggal_penerimaan_penolakan) {
+        formData.append('tanggal_penerimaan_penolakan', format(values.tanggal_penerimaan_penolakan, 'yyyy-MM-dd'));
+      }
+      if (values.tanggal_dilaporkan) {
+        formData.append('tanggal_dilaporkan', format(values.tanggal_dilaporkan, 'yyyy-MM-dd'));
+      }
+
+      if (values.bukti_files && values.bukti_files.length > 0) {
+        formData.append('bukti_files_ids', JSON.stringify(values.bukti_files));
+      }
+
+      const result = await submitLaporanGratifikasi(formData);
+
+      toast.success('Laporan Gratifikasi Terkirim!', {
+        description: `Terima kasih. Kode Laporan: ${result.data?.kode_gratifikasi || '-'}`,
+      });
+
+      form.reset();
+      router.push('/success');
+    } catch (error: unknown) {
+      console.error('Submission Error:', error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'string'
+            ? error
+            : 'Terjadi kesalahan saat mengirim data.';
+      toast.error('Gagal mengirim laporan', {
+        description: message,
+      });
+      router.push(`/failed?${new URLSearchParams({ error: message })}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   const hasGlobalErrors = Object.keys(form.formState.errors).length > 0 && form.formState.isSubmitted;
@@ -128,7 +176,7 @@ export function GratifikasiForm() {
                   <FormControl>
                     <RadioGroup
                       onValueChange={field.onChange}
-                      value={field.value}
+                      value={field.value ?? undefined}
                       className="flex justify-center mt-3"
                     >
                       <div className="flex flex-col md:flex-row items-center gap-6">
@@ -175,9 +223,9 @@ export function GratifikasiForm() {
               label="Nomor WhatsApp Aktif Pelapor"
               required
               type="tel"
-              placeholder=""
+              placeholder="Contoh: 081234567890"
             />
-            <InputField control={form.control} name="email" label="Email Pelapor" required type="email" />
+            <InputField control={form.control} name="email" label="Email Pelapor (Gmail)" required type="email" placeholder="email@gmail.com" />
 
             <SectionLabel className="sm:col-span-2 mt-4" title="2. Deskripsi Kejadian" />
 
@@ -236,7 +284,7 @@ export function GratifikasiForm() {
                   <FormControl>
                     <Textarea
                       rows={4}
-                      placeholder="Kronologi Kejadian"
+                      placeholder="Ceritakan kronologi kejadian secara detail..."
                       className="border-blue-500/60 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:text-blue-500"
                       {...field}
                     />
@@ -281,8 +329,8 @@ export function GratifikasiForm() {
                 Anda belum mengisi semua data yang diperlukan. Silakan lengkapi dan coba lagi.
               </p>
               <ul className="list-disc ps-5 space-y-1">
-                {Object.values(form.formState.errors).map((err, i) => (
-                  <li key={i}>{err.message}</li>
+                {(Object.values(form.formState.errors) as FieldError[]).map((err, i) => (
+                  <li key={i}>{err?.message}</li>
                 ))}
               </ul>
             </div>
@@ -291,9 +339,10 @@ export function GratifikasiForm() {
           <div className="mt-10">
             <Button
               type="submit"
-              className="w-full bg-blue-500 hover:bg-blue-500 text-white cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white cursor-pointer disabled:opacity-50"
             >
-              KIRIM!
+              {isSubmitting ? 'Mengirim...' : 'KIRIM!'}
             </Button>
           </div>
         </form>
