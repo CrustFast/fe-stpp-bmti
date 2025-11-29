@@ -369,7 +369,7 @@ export function BenturanKepentinganForm() {
                           <SelectItem
                             key={j.kode_id}
                             value={String(j.kode_id)}
-                            className="text-sm py-2 whitespace-normal wrap-break-words"
+                            className="text-sm py-2 whitespace-normal break-words"
                             title={j.jenis_benturan_kepentingan}
                           >
                             <span className="block max-w-[56ch]">
