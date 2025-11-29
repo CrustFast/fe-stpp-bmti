@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import type { Control, FieldError } from 'react-hook-form';
 import { z } from 'zod';
@@ -29,18 +29,17 @@ import { submitLaporanBenturan } from '@/app/laporan/dumas/action';
 import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
-  // 1. Informasi Pelapor
   nama_pelapor: z.string().min(1, 'Nama pelapor wajib diisi.'),
   jabatan: z.string().min(1, 'Jabatan wajib diisi.'),
-  nomor_telepon: z.string().regex(/^\d{10,15}$/, 'Nomor telepon harus 10-15 digit.'),
-  email_pelapor: z.string().email('Format email tidak valid.'),
+  nomor_telepon: z.string().regex(/^(\+62|62|0)8[1-9][0-9]{6,11}$/, 'Nomor telepon tidak valid (contoh: 08123456789).'),
+  email_pelapor: z.string().email('Format email tidak valid.').refine((val) => val.toLowerCase().endsWith('@gmail.com'), {
+    message: 'Email harus menggunakan domain @gmail.com',
+  }),
 
-  // 2. Informasi Pihak Terlibat
   nama_pihak_terlibat: z.string().min(1, 'Nama pihak terlibat wajib diisi.'),
   jabatan_pihak_terlibat: z.string().min(1, 'Jabatan pihak terlibat wajib diisi.'),
   program_keahlian_id: z.string().min(1, 'Unit kerja wajib dipilih.'),
 
-  // 3. Deskripsi Kejadian
   tanggal_penerimaan_penolakan: z
     .date()
     .nullable()
@@ -60,17 +59,23 @@ const formSchema = z.object({
 
 export type BenturanFormSchema = z.infer<typeof formSchema>;
 
-interface BenturanKepentinganFormProps {
-  unitKerjaOptions: { id: string | number; nama_unit: string }[];
-  jenisBenturanOptions: { kode_id: string | number; jenis_benturan_kepentingan: string }[];
-  onSubmit?: (data: BenturanFormSchema) => Promise<void> | void;
-}
+type UnitKerja = {
+  id: number;
+  nama_program_keahlian: string;
+};
 
-export function BenturanKepentinganForm({
-  unitKerjaOptions,
-  jenisBenturanOptions,
-  onSubmit,
-}: BenturanKepentinganFormProps) {
+type JenisBenturan = {
+  kode_id: string;
+  jenis_benturan_kepentingan: string;
+};
+
+type ApiResponse<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+};
+
+export function BenturanKepentinganForm() {
   const form = useForm<BenturanFormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -91,19 +96,42 @@ export function BenturanKepentinganForm({
   });
 
   const router = useRouter();
-
   const [openTanggalPenerimaan, setOpenTanggalPenerimaan] = React.useState(false);
   const [openTanggalDilaporkan, setOpenTanggalDilaporkan] = React.useState(false);
+
+  const [unitKerjaOptions, setUnitKerjaOptions] = useState<UnitKerja[]>([]);
+  const [jenisBenturanOptions, setJenisBenturanOptions] = useState<JenisBenturan[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        setIsLoadingOptions(true);
+        // Fetch Unit Kerja
+        const resUnit = await fetch('http://localhost:8080/api/ref/program-keahlian');
+        const jsonUnit: ApiResponse<UnitKerja[]> = await resUnit.json();
+
+        // Fetch Jenis Benturan
+        const resJenis = await fetch('http://localhost:8080/api/ref/jenis-benturan');
+        const jsonJenis: ApiResponse<JenisBenturan[]> = await resJenis.json();
+
+        if (jsonUnit.success) setUnitKerjaOptions(jsonUnit.data);
+        if (jsonJenis.success) setJenisBenturanOptions(jsonJenis.data);
+      } catch (error) {
+        console.error("Failed to fetch options:", error);
+        toast.error("Gagal memuat data referensi (Unit Kerja / Jenis Benturan).");
+      } finally {
+        setIsLoadingOptions(false);
+      }
+    };
+
+    fetchOptions();
+  }, []);
 
   const hasGlobalErrors =
     Object.keys(form.formState.errors).length > 0 && form.formState.isSubmitted;
 
   async function handleSubmit(values: BenturanFormSchema) {
-    if (onSubmit) {
-      await onSubmit(values);
-      return;
-    }
-
     try {
       const formData = new FormData();
 
@@ -187,7 +215,7 @@ export function BenturanKepentinganForm({
               label="Nomor Telepon Pelapor"
               required
               type="tel"
-              placeholder=""
+              placeholder="08xxxxxxxxxx"
             />
             <TextInput
               control={form.control}
@@ -195,6 +223,7 @@ export function BenturanKepentinganForm({
               label="Email Pelapor"
               required
               type="email"
+              placeholder="email@gmail.com"
             />
 
             <SectionLabel className="sm:col-span-2 mt-4" title="2. Informasi Pihak Terlibat" />
@@ -224,23 +253,28 @@ export function BenturanKepentinganForm({
                     <Select
                       value={field.value}
                       onValueChange={(val) => field.onChange(val)}
+                      disabled={isLoadingOptions}
                     >
                       <SelectTrigger
                         className={cn(
                           'h-11 w-full rounded-md border border-blue-500/60 bg-white px-3 text-sm',
-                          'focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:text-blue-500'
+                          'focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:text-blue-500',
+                          'truncate'
                         )}
                       >
-                        <SelectValue placeholder="Pilih Unit Kerja" />
+                        <SelectValue
+                          placeholder={isLoadingOptions ? "Memuat data..." : "Pilih Unit Kerja"}
+                          className="truncate"
+                        />
                       </SelectTrigger>
                       <SelectContent className="max-h-64">
                         {unitKerjaOptions.map((u) => (
                           <SelectItem
                             key={u.id}
                             value={String(u.id)}
-                            className="text-sm py-2"
+                            className="text-sm py-2 line-clamp-1"
                           >
-                            {u.nama_unit}
+                            {u.nama_program_keahlian}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -312,23 +346,35 @@ export function BenturanKepentinganForm({
                     <Select
                       value={field.value}
                       onValueChange={(val) => field.onChange(val)}
+                      disabled={isLoadingOptions}
                     >
                       <SelectTrigger
+                        title={
+                          jenisBenturanOptions.find((j) => String(j.kode_id) === String(field.value))
+                            ?.jenis_benturan_kepentingan ?? ''
+                        }
                         className={cn(
                           'h-11 w-full rounded-md border border-blue-500/60 bg-white px-3 text-sm',
-                          'focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:text-blue-500'
+                          'focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:text-blue-500',
+                          'truncate'
                         )}
                       >
-                        <SelectValue placeholder="Pilih Jenis" />
+                        <SelectValue
+                          placeholder={isLoadingOptions ? "Memuat data..." : "Pilih Jenis"}
+                          className="truncate"
+                        />
                       </SelectTrigger>
                       <SelectContent className="max-h-64">
                         {jenisBenturanOptions.map((j) => (
                           <SelectItem
                             key={j.kode_id}
                             value={String(j.kode_id)}
-                            className="text-sm py-2"
+                            className="text-sm py-2 whitespace-normal break-words"
+                            title={j.jenis_benturan_kepentingan}
                           >
-                            {j.jenis_benturan_kepentingan}
+                            <span className="block max-w-[56ch]">
+                              {j.jenis_benturan_kepentingan}
+                            </span>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -372,15 +418,15 @@ export function BenturanKepentinganForm({
                     <FilePondUploader
                       control={form.control}
                       name="bukti_files"
-                      helperText="Minimal 1 file. Maks 10 file. Format: Gambar / Video / PDF / DOC / DOCX"
+                      helperText="Minimal 1 file. Maks 3 file. Format: Gambar / PDF"
                       maxFiles={10}
                       allowMultiple
                       acceptedFileTypes={[
                         'image/*',
-                        'video/*',
+                        // 'video/*',
                         'application/pdf',
-                        'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        // 'application/msword',
+                        // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                       ]}
                     />
                   </FormControl>
