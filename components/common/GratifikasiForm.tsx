@@ -306,14 +306,14 @@ export function GratifikasiForm() {
                     <FilePondUploader
                       control={form.control}
                       name="bukti_files"
-                      helperText="Minimal 1 file. Maks 10 file. Format: Gambar / PDF / DOC / DOCX"
+                      helperText="Minimal 1 file. Maks 3 file. Format: Gambar / PDF"
                       maxFiles={10}
                       allowMultiple
                       acceptedFileTypes={[
                         'image/*',
                         'application/pdf',
-                        'application/msword',
-                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        // 'application/msword',
+                        // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                       ]}
                     />
                   </FormControl>

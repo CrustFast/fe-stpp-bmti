@@ -780,7 +780,7 @@ export function LaporanForm() {
                         <FilePondUploader
                           control={form.control}
                           name="bukti_foto_ids"
-                          helperText="Maksimal 10 file, format JPG/PNG/WebP atau PDF"
+                          helperText="Maksimal 3 file, format JPG/PNG/WebP atau PDF"
                           maxFiles={10}
                           allowMultiple
                           acceptedFileTypes={['image/*', 'application/pdf']}
