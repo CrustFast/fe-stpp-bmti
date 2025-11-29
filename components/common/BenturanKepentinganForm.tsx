@@ -110,7 +110,7 @@ export function BenturanKepentinganForm() {
         // Fetch Unit Kerja
         const resUnit = await fetch('http://localhost:8080/api/ref/program-keahlian');
         const jsonUnit: ApiResponse<UnitKerja[]> = await resUnit.json();
-        
+
         // Fetch Jenis Benturan
         const resJenis = await fetch('http://localhost:8080/api/ref/jenis-benturan');
         const jsonJenis: ApiResponse<JenisBenturan[]> = await resJenis.json();
@@ -259,12 +259,12 @@ export function BenturanKepentinganForm() {
                         className={cn(
                           'h-11 w-full rounded-md border border-blue-500/60 bg-white px-3 text-sm',
                           'focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:text-blue-500',
-                          'truncate' 
+                          'truncate'
                         )}
                       >
                         <SelectValue
                           placeholder={isLoadingOptions ? "Memuat data..." : "Pilih Unit Kerja"}
-                          className="truncate" 
+                          className="truncate"
                         />
                       </SelectTrigger>
                       <SelectContent className="max-h-64">
@@ -272,7 +272,7 @@ export function BenturanKepentinganForm() {
                           <SelectItem
                             key={u.id}
                             value={String(u.id)}
-                            className="text-sm py-2 line-clamp-1" 
+                            className="text-sm py-2 line-clamp-1"
                           >
                             {u.nama_program_keahlian}
                           </SelectItem>
