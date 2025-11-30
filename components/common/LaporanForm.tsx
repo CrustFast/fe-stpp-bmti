@@ -128,6 +128,9 @@ const kategoriOptions = [
   { value: 'SKM7', label: 'Kompetensi/kemampuan petugas' },
   { value: 'SKM8', label: 'Penanganan Pengaduan' },
   { value: 'SKM9', label: 'Kualitas sarana dan prasarana' },
+  { value: 'TDB1', label: 'kekerasan seksual' },
+  { value: 'TDB2', label: 'perundungan' },
+  { value: 'TDB3', label: 'intoleransi' },
 ];
 
 const programKeahlianOptions = [
