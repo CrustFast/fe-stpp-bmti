@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { signIn } from 'next-auth/react';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -32,7 +33,7 @@ type LoginFormSchema = z.infer<typeof formSchema>;
 export function LoginForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginFormSchema>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -118,12 +119,25 @@ export function LoginForm() {
                   Password <span className="text-red-500">*</span>
                 </FormLabel>
                 <FormControl>
-                  <Input
-                    placeholder="Masukkan password Anda"
-                    type="password"
-                    className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500"
-                    {...field}
-                  />
+                  <div className="relative">
+                    <Input
+                      placeholder="Masukkan password Anda"
+                      type={showPassword ? "text" : "password"}
+                      className="h-11 border-blue-500/60 focus:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500 pr-10" // Tambah pr-10 agar text tidak tertutup icon
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-bmti transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff size={20} />
+                      ) : (
+                        <Eye size={20} />
+                      )}
+                    </button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -1,7 +1,38 @@
 import NextAuth from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
+import { type JWT } from "next-auth/jwt"
 
+const API_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
+async function refreshAccessToken(token: JWT) {
+  try {
+    if (!token.refreshToken) {
+      console.error("RefreshAccessTokenError: Missing refresh token");
+      throw new Error("Missing refresh token");
+    }
+    const response = await fetch(`${API_URL}/api/refresh-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: token.refreshToken }),
+    })
+    const refreshedTokens = await response.json()
+    if (!response.ok) {
+      throw refreshedTokens
+    }
+    return {
+      ...token,
+      accessToken: refreshedTokens.access_token,
+      refreshToken: refreshedTokens.refresh_token ?? token.refreshToken,
+      expiresAt: Date.now() + (refreshedTokens.expires_in * 1000),
+    }
+  } catch (error) {
+    console.log("RefreshAccessTokenError", error)
+    return {
+      ...token,
+      error: "RefreshAccessTokenError",
+    }
+  }
+}
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -13,15 +44,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsedCredentials = z
           .object({ email: z.string().email(), password: z.string().min(6) })
           .safeParse(credentials)
-
         if (parsedCredentials.success) {
           const { email, password } = parsedCredentials.data
-          if (email === 'admin@bmti.com' && password === 'password123') {
-            return {
-              id: '1',
-              name: 'Admin BMTI',
-              email: email,
+
+          try {
+            const res = await fetch(`${API_URL}/api/login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+            });
+            const user = await res.json();
+            console.log("Login response:", user);
+            if (res.ok && user.access_token) {
+              return {
+                id: email,
+                name: "Admin",
+                email: email,
+                access_token: user.access_token,
+                refresh_token: user.refresh_token,
+                expires_in: user.expires_in,
+                token_type: user.token_type,
+              }
             }
+          } catch (e) {
+            console.error("Login error", e)
           }
         }
         return null
@@ -32,13 +78,41 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     signIn: '/login',
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        return {
+          accessToken: user.access_token,
+          refreshToken: user.refresh_token,
+          expiresAt: Date.now() + (user.expires_in * 1000),
+          user: {
+            id: user.id,
+            email: user.email,
+            name: user.name
+          }
+        }
+      }
+      if (Date.now() < token.expiresAt) {
+        return token
+      }
+      return refreshAccessToken(token)
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken
+      session.error = token.error
+      if (token.user) {
+        session.user = { ...session.user, ...token.user }
+      }
+      return session
+    },
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const hasRefreshError = auth?.error === "RefreshAccessTokenError";
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+
       if (isOnDashboard) {
-        if (isLoggedIn) return true;
+        if (isLoggedIn && !hasRefreshError) return true;
         return false;
-      } else if (isLoggedIn && nextUrl.pathname === '/login') {
+      } else if (isLoggedIn && !hasRefreshError && nextUrl.pathname === '/login') {
         return Response.redirect(new URL('/dashboard', nextUrl));
       }
       return true;
