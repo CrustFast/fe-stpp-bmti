@@ -128,6 +128,9 @@ const kategoriOptions = [
   { value: 'SKM7', label: 'Kompetensi/kemampuan petugas' },
   { value: 'SKM8', label: 'Penanganan Pengaduan' },
   { value: 'SKM9', label: 'Kualitas sarana dan prasarana' },
+  { value: 'TDB1', label: 'kekerasan seksual' },
+  { value: 'TDB2', label: 'perundungan' },
+  { value: 'TDB3', label: 'intoleransi' },
 ];
 
 const programKeahlianOptions = [
@@ -780,7 +783,7 @@ export function LaporanForm() {
                         <FilePondUploader
                           control={form.control}
                           name="bukti_foto_ids"
-                          helperText="Maksimal 10 file, format JPG/PNG/WebP atau PDF"
+                          helperText="Maksimal 3 file, format JPG/PNG/WebP atau PDF"
                           maxFiles={10}
                           allowMultiple
                           acceptedFileTypes={['image/*', 'application/pdf']}
