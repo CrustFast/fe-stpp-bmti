@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import gsap from 'gsap';
-import { useLenis } from 'lenis/react'; 
+import { useLenis } from 'lenis/react';
 import { Menu, X } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
   const [isInBlueZone, setIsInBlueZone] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const lenis = useLenis(); 
+  const lenis = useLenis();
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileLinksRef = useRef<HTMLDivElement | null>(null);
 
@@ -53,8 +53,8 @@ const Navbar: React.FC = () => {
         isInBlueZone || isPastMain
           ? '#0369a1'
           : isScrolled
-          ? 'rgba(255, 255, 255, 0.05)'
-          : 'transparent',
+            ? 'rgba(255, 255, 255, 0.05)'
+            : 'transparent',
       backdropFilter:
         isScrolled || isInBlueZone || isPastMain ? 'blur(12px)' : 'none',
       borderBottom:
@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
     gsap.killTweensOf(bar);
     gsap.to(bar, {
       scaleX: enter ? 1 : 0,
-      duration: 0.10, 
+      duration: 0.10,
       ease: 'power3.out',
     });
   };
@@ -129,9 +129,9 @@ const Navbar: React.FC = () => {
     }
 
     lenis?.scrollTo(target, {
-      offset: -100, 
+      offset: -100,
       duration: 1.4,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       onComplete: () => {
         if (isMobileOpen) setIsMobileOpen(false);
       },
@@ -186,16 +186,14 @@ const Navbar: React.FC = () => {
             <span className="relative w-6 h-6">
               <span className="absolute inset-0 flex items-center justify-center">
                 <Menu
-                  className={`h-6 w-6 transition-all duration-300 ${
-                    isMobileOpen ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
-                  }`}
+                  className={`h-6 w-6 transition-all duration-300 ${isMobileOpen ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
+                    }`}
                 />
               </span>
               <span className="absolute inset-0 flex items-center justify-center">
                 <X
-                  className={`h-6 w-6 transition-all duration-300 ${
-                    isMobileOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
-                  }`}
+                  className={`h-6 w-6 transition-all duration-300 ${isMobileOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
+                    }`}
                 />
               </span>
             </span>
