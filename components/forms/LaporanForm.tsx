@@ -256,7 +256,6 @@ export function LaporanForm() {
     }
   }, [form]);
 
-  //autosave form
   React.useEffect(() => {
     type DraftData = {
       [K in keyof FormSchema]:
@@ -284,7 +283,6 @@ export function LaporanForm() {
     return () => sub.unsubscribe();
   }, [watch]);
 
-  // Hapus draft saat browser ditutup/refresh
   React.useEffect(() => {
     const handleBeforeUnload = () => {
       localStorage.removeItem(DRAFT_KEY);
@@ -346,8 +344,7 @@ export function LaporanForm() {
 
     try {
       const payload = compact({
-        // gunakan hasil normalisasi
-        klasifikasi_laporan: values.klasifikasi_laporan!, // langsung kirim tanpa normalisasi
+        klasifikasi_laporan: values.klasifikasi_laporan!,
         tanggal_pengaduan: toDateStr(values.tanggal_pengaduan),
         jenis_layanan: values.jenis_layanan,
         tipe: values.tipe,
@@ -393,11 +390,10 @@ export function LaporanForm() {
         fd.append('bukti_foto_ids', JSON.stringify(values.bukti_foto_ids));
       }
 
-      // DEBUG: pastikan nilai terkirim
       console.log('Payload:', payload);
       console.log('fd klasifikasi_laporan =', fd.get('klasifikasi_laporan'));
 
-      let endpoint = '/api/laporan/pengaduan'; // Default
+      let endpoint = '/api/laporan/pengaduan';
       if (values.klasifikasi_laporan === 'permintaan-informasi') {
         endpoint = '/api/laporan/permintaan-informasi';
       } else if (values.klasifikasi_laporan === 'saran') {
@@ -427,7 +423,7 @@ export function LaporanForm() {
   return (
     <div id="laporanForm" className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-blue-bmti sm:text-4xl">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">
           Lengkapi Data dan Tuliskan Pengaduan
         </h2>
       </div>

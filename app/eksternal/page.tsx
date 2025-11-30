@@ -1,9 +1,9 @@
 'use client';
 import { useLayoutEffect } from 'react';
-import Navbar from '@/components/common/NavbarSigap';
-import { LayananInformasi } from '@/components/common/HeroSigap';
-import { LaporanForm } from '@/components/common/LaporanForm';
-import FooterComponent from '@/layouts/Footer';
+import Navbar from '@/components/layout/NavbarSigap';
+import { LayananInformasi } from '@/components/sections/HeroSigap';
+import { LaporanForm } from '@/components/forms/LaporanForm';
+import FooterComponent from '@/components/layout/Footer';
 
 export default function ManfaatPage() {
   useLayoutEffect(() => {

@@ -148,7 +148,7 @@ export function GratifikasiForm() {
   return (
     <div id="gratifikasiForm" className="isolate bg-white px-6 py-24 sm:py-32 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-blue-bmti sm:text-4xl">
+        <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">
           Lengkapi Data dan Tuliskan Pengaduan
         </h2>
       </div>

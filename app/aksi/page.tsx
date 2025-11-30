@@ -1,10 +1,10 @@
-import Navbar from '@/components/common/NavbarAksi';
-import { HeroAksi } from '@/components/common/HeroAksi';
-import { AksiOptions } from '@/components/common/KanalAduan';
-import { TimelineGratifikasi } from '@/components/common/TimelineGratifikasi';
-import { GratifikasiForm } from '@/components/common/GratifikasiForm';
+import Navbar from '@/components/layout/NavbarAksi';
+import { HeroAksi } from '@/components/sections/HeroAksi';
+import { AksiOptions } from '@/components/sections/KanalAduan';
+import { TimelineGratifikasi } from '@/components/sections/TimelineGratifikasi';
+import { GratifikasiForm } from '@/components/forms/GratifikasiForm';
 
-import FooterComponent from '@/layouts/Footer';
+import FooterComponent from '@/components/layout/Footer';
 
 import { Metadata } from 'next';
 
