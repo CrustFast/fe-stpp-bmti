@@ -16,17 +16,44 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useEffect, useState } from "react"
+
+interface User {
+  id: number
+  name: string
+  email: string
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export function UserNav() {
+  const [user, setUser] = useState<User | null>(null)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/users`)
+        if (!res.ok) throw new Error("Failed to fetch user")
+        const json = await res.json()
+        if (json.data && json.data.length > 0) {
+          setUser(json.data[0])
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error)
+      }
+    }
+
+    fetchUser()
+  }, [])
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="/avatars/01.png" alt="@shadcn" />
+            <AvatarImage src="/avatars/01.png" alt={user?.name || "@shadcn"} />
             <AvatarFallback>SC</AvatarFallback>
           </Avatar>
         </Button>
@@ -34,9 +61,9 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">shadcn</p>
+            <p className="text-sm font-medium leading-none">{user?.name || "shadcn"}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              m@example.com
+              {user?.email || "m@example.com"}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -44,17 +71,14 @@ export function UserNav() {
         <DropdownMenuGroup>
           <DropdownMenuItem>
             Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem>
             Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
           Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
