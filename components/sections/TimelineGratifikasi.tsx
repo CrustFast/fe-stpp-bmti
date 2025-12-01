@@ -1,8 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { Download, FileText, Upload, Check } from 'lucide-react';
+import { Download, FileText, Upload } from 'lucide-react';
 
 export function TimelineGratifikasi() {
   return (

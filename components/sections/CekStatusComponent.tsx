@@ -1,18 +1,9 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import * as z from 'zod';
+
 import { Clipboard, Search } from 'lucide-react';
 import gsap from 'gsap';
-
-const schema = z.object({
-  idPengaduan: z
-    .string()
-    .min(5, 'ID Pengaduan minimal 5 karakter')
-    .regex(/^[A-Z0-9-]+$/, 'Format ID tidak valid'),
-});
-
-type FormData = z.infer<typeof schema>;
 
 interface StatusResult {
   id: string;
@@ -24,7 +15,7 @@ interface StatusResult {
 const CekStatusComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<StatusResult | null>(null);
-  const [idInput, setIdInput] = useState(''); 
+  const [idInput, setIdInput] = useState('');
 
   const titleRef = useRef<HTMLHeadingElement>(null);
   const descRef = useRef<HTMLParagraphElement>(null);
@@ -65,12 +56,6 @@ const CekStatusComponent = () => {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idInput.trim()) return;
-
-    // const validated = schema.safeParse({ idPengaduan: idInput });
-    // if (!validated.success) {
-    //   alert(validated.error.errors[0].message);
-    //   return;
-    // }
 
     setIsLoading(true);
     setTimeout(() => {

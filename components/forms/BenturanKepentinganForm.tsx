@@ -409,7 +409,7 @@ export function BenturanKepentinganForm() {
             <FormField
               control={form.control}
               name="bukti_files"
-              render={({ field }) => (
+              render={() => (
                 <FormItem className="sm:col-span-2 mt-2">
                   <FormLabel>
                     Upload file (dokumen, foto, video, dll.) <span className="text-red-600">*</span>

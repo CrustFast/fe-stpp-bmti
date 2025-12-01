@@ -305,21 +305,8 @@ export function LaporanForm() {
       }
     }
   }, [privasi, tipe, setValue, watch]);
-
   function toDateStr(d?: Date) {
     return d ? format(d, 'yyyy-MM-dd') : undefined;
-  }
-
-  function fileToBase64(file: File) {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const s = String(reader.result);
-        resolve(s.includes(',') ? s.split(',')[1] : s);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   }
 
   function compact<T extends Record<string, unknown>>(obj: T): T {
@@ -772,7 +759,7 @@ export function LaporanForm() {
                 <FormField
                   control={form.control}
                   name="bukti_foto_ids"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>Foto Sebagai Bukti Pendukung (opsional)</FormLabel>
                       <FormControl>
