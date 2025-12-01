@@ -3,36 +3,71 @@ import {
   CardContent,
 } from "@/components/ui/card"
 import { Area, AreaChart, ResponsiveContainer } from "recharts"
+import { useEffect, useState } from "react"
 
 interface StatsCardsProps {
   year: string
   period: string
 }
 
-const getMockData = (year: string, period: string) => {
-  // Simple seed-like behavior based on year and period string length
-  const baseValue = parseInt(year) + period.length
-
-  const generateData = (base: number) => {
-    return Array.from({ length: 12 }, (_, i) => ({
-      value: Math.floor(Math.random() * 50) + base + i
-    }))
-  }
-
-  return {
-    pengaduan: {
-      total: period === "all" ? "192.10k" : `${(192 / 4).toFixed(2)}k`,
-      data: generateData(baseValue % 10)
-    },
-    konsultasi: {
-      total: period === "all" ? "1.34k" : `${(1.34 / 4).toFixed(2)}k`,
-      data: generateData((baseValue + 5) % 10)
-    }
-  }
+interface TrendData {
+  value: number
 }
 
+interface StatItem {
+  total: string
+  trend: TrendData[]
+}
+
+interface StatsData {
+  pengaduan: StatItem
+  konsultasi: StatItem
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+
 export function StatsCards({ year, period }: StatsCardsProps) {
-  const data = getMockData(year, period)
+  const [data, setData] = useState<StatsData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/dashboard/summary?year=${year}&period=${period}`)
+        if (!res.ok) throw new Error("Failed to fetch stats")
+        const json = await res.json()
+        setData(json.data.stats)
+      } catch (error) {
+        console.error("Error fetching stats:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+
+    const interval = setInterval(fetchData, 5000)
+
+    return () => clearInterval(interval)
+  }, [year, period])
+
+  if (loading || !data) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+        {[1, 2].map((i) => (
+          <Card key={i} className="overflow-hidden pb-0">
+            <CardContent className="px-6 pt-4 pb-0">
+              <div className="space-y-1 mb-8">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mt-2" />
+              </div>
+              <div className="h-[80px] -mx-6 bg-gray-100 animate-pulse" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
@@ -46,7 +81,7 @@ export function StatsCards({ year, period }: StatsCardsProps) {
           </div>
           <div className="h-[80px] -mx-6">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.pengaduan.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={data.pengaduan.trend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorPengaduan" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -76,7 +111,7 @@ export function StatsCards({ year, period }: StatsCardsProps) {
           </div>
           <div className="h-[80px] -mx-6">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.konsultasi.data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+              <AreaChart data={data.konsultasi.trend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorKonsultasi" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />

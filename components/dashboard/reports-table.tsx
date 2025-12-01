@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/table"
 import {
   Tabs,
-  TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
@@ -31,54 +30,87 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown } from "lucide-react"
+import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
 
 interface ReportsTableProps {
   year: string
   period: string
 }
 
-const getReports = (year: string) => {
-  // Generate mock reports based on year
-  const baseCode = parseInt(year) * 100
-
-  return [
-    {
-      code: `${baseCode + 164}`,
-      name: "-",
-      type: "Luring",
-      status: "Selesai",
-      date: `26 April ${year}`,
-    },
-    {
-      code: `${baseCode + 777}`,
-      name: "-",
-      type: "Luring",
-      status: "Selesai",
-      date: `25 April ${year}`,
-    },
-    {
-      code: `${baseCode + 650}`,
-      name: "-",
-      type: "Luring",
-      status: "Selesai",
-      date: `23 April ${year}`,
-    },
-    {
-      code: `${baseCode + 168}`,
-      name: "-",
-      type: "Luring",
-      status: "Selesai",
-      date: `22 April ${year}`,
-    },
-  ]
+interface Report {
+  code: string
+  name: string
+  type: string
+  status: string
+  date: string
 }
 
-export function ReportsTable({ year }: ReportsTableProps) {
-  const reports = getReports(year)
+interface Pagination {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+
+export function ReportsTable({ year, period }: ReportsTableProps) {
+  const [category, setCategory] = React.useState("pengaduan")
+  const [reports, setReports] = React.useState<Report[]>([])
+  const [pagination, setPagination] = React.useState<Pagination | null>(null)
+  const [loading, setLoading] = React.useState(true)
+  const [page, setPage] = React.useState(1)
+  const [search, setSearch] = React.useState("")
+
+  React.useEffect(() => {
+    const fetchReports = async () => {
+      setLoading(true)
+      try {
+        const queryParams = new URLSearchParams({
+          year,
+          period,
+          category,
+          page: page.toString(),
+          limit: "10",
+          search
+        })
+
+        const res = await fetch(`${API_URL}/api/reports?${queryParams}`)
+        if (!res.ok) throw new Error("Failed to fetch reports")
+        const json = await res.json()
+        setReports(json.data.reports)
+        setPagination(json.data.pagination)
+      } catch (error) {
+        console.error("Error fetching reports:", error)
+        setReports([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchReports()
+
+    if (page === 1 && search === "") {
+      const interval = setInterval(fetchReports, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [year, period, category, page, search])
+
+  React.useEffect(() => {
+    setPage(1)
+  }, [year, period, category, search])
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case "gratifikasi": return "Gratifikasi"
+      case "benturan": return "Benturan Kepentingan"
+      case "pengaduan": return "Pengaduan"
+      default: return "Laporan"
+    }
+  }
 
   return (
-    <Tabs defaultValue="pengaduan" className="w-full space-y-4">
+    <Tabs value={category} onValueChange={setCategory} className="w-full space-y-4">
       <TabsList className="bg-transparent p-0 h-auto space-x-6 justify-start border-b w-full rounded-none">
         <TabsTrigger
           value="gratifikasi"
@@ -103,59 +135,77 @@ export function ReportsTable({ year }: ReportsTableProps) {
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="pengaduan" className="space-y-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-            <div className="space-y-1">
-              <CardTitle className="text-xl font-bold">SIGAP</CardTitle>
-              <CardDescription>Laporan Pengaduan Eksternal {year}</CardDescription>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" className="h-8">View all</Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="h-8 gap-2 px-3">
-                    <Download className="h-3.5 w-3.5" />
-                    <span className="text-sm">Export</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <FileText className="mr-2 h-4 w-4" />
-                    <span>PDF</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    <span>Excel</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Cari Pengaduan"
-                className="pl-8 w-full md:w-[300px]"
-              />
-            </div>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-bold">
+              {category === "pengaduan" ? "SIGAP" : getCategoryLabel(category)}
+            </CardTitle>
+            <CardDescription>
+              Laporan {getCategoryLabel(category)} {year} {period !== "all" ? `(${period.toUpperCase()})` : ""}
+            </CardDescription>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" className="h-8">View all</Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="h-8 gap-2 px-3">
+                  <Download className="h-3.5 w-3.5" />
+                  <span className="text-sm">Export</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>
+                  <FileText className="mr-2 h-4 w-4" />
+                  <span>PDF</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  <span>Excel</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={`Cari ${getCategoryLabel(category)}...`}
+              className="pl-8 w-full md:w-[300px]"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Kode Pengaduan</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Nama</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tipe</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Status Pengaduan</TableHead>
+                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tanggal Pengaduan</TableHead>
+                  <TableHead className="text-right"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
                   <TableRow>
-                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Kode Pengaduan</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Nama</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tipe</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Status Pengaduan</TableHead>
-                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tanggal Pengaduan</TableHead>
-                    <TableHead className="text-right"></TableHead>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Loading...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reports.map((report) => (
+                ) : reports.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  reports.map((report) => (
                     <TableRow key={report.code}>
                       <TableCell className="font-medium">{report.code}</TableCell>
                       <TableCell>{report.name}</TableCell>
@@ -172,37 +222,38 @@ export function ReportsTable({ year }: ReportsTableProps) {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || loading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <div className="text-sm text-muted-foreground">
+                Page {pagination.page} of {pagination.totalPages}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                disabled={page === pagination.totalPages || loading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="gratifikasi">
-        <Card>
-          <CardHeader>
-            <CardTitle>Gratifikasi</CardTitle>
-            <CardDescription>Laporan Gratifikasi {year}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">No data available.</div>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="benturan">
-        <Card>
-          <CardHeader>
-            <CardTitle>Benturan Kepentingan</CardTitle>
-            <CardDescription>Laporan Benturan Kepentingan {year}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">No data available.</div>
-          </CardContent>
-        </Card>
-      </TabsContent>
+          )}
+        </CardContent>
+      </Card>
     </Tabs>
   )
 }
