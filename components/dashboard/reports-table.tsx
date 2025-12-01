@@ -31,40 +31,52 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Download, ExternalLink, Gift, Users, FileText, FileSpreadsheet, ChevronDown } from "lucide-react"
+import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown } from "lucide-react"
 
-const reports = [
-  {
-    code: "373164",
-    name: "-",
-    type: "Luring",
-    status: "Selesai",
-    date: "26 April 2023",
-  },
-  {
-    code: "887777",
-    name: "-",
-    type: "Luring",
-    status: "Selesai",
-    date: "25 April 2023",
-  },
-  {
-    code: "630650",
-    name: "-",
-    type: "Luring",
-    status: "Selesai",
-    date: "23 April 2023",
-  },
-  {
-    code: "932168",
-    name: "-",
-    type: "Luring",
-    status: "Selesai",
-    date: "22 April 2023",
-  },
-]
+interface ReportsTableProps {
+  year: string
+  period: string
+}
 
-export function ReportsTable() {
+const getReports = (year: string) => {
+  // Generate mock reports based on year
+  const baseCode = parseInt(year) * 100
+
+  return [
+    {
+      code: `${baseCode + 164}`,
+      name: "-",
+      type: "Luring",
+      status: "Selesai",
+      date: `26 April ${year}`,
+    },
+    {
+      code: `${baseCode + 777}`,
+      name: "-",
+      type: "Luring",
+      status: "Selesai",
+      date: `25 April ${year}`,
+    },
+    {
+      code: `${baseCode + 650}`,
+      name: "-",
+      type: "Luring",
+      status: "Selesai",
+      date: `23 April ${year}`,
+    },
+    {
+      code: `${baseCode + 168}`,
+      name: "-",
+      type: "Luring",
+      status: "Selesai",
+      date: `22 April ${year}`,
+    },
+  ]
+}
+
+export function ReportsTable({ year }: ReportsTableProps) {
+  const reports = getReports(year)
+
   return (
     <Tabs defaultValue="pengaduan" className="w-full space-y-4">
       <TabsList className="bg-transparent p-0 h-auto space-x-6 justify-start border-b w-full rounded-none">
@@ -96,7 +108,7 @@ export function ReportsTable() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div className="space-y-1">
               <CardTitle className="text-xl font-bold">SIGAP</CardTitle>
-              <CardDescription>Laporan Pengaduan Eksternal</CardDescription>
+              <CardDescription>Laporan Pengaduan Eksternal {year}</CardDescription>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" className="h-8">View all</Button>
@@ -172,7 +184,7 @@ export function ReportsTable() {
         <Card>
           <CardHeader>
             <CardTitle>Gratifikasi</CardTitle>
-            <CardDescription>Laporan Gratifikasi</CardDescription>
+            <CardDescription>Laporan Gratifikasi {year}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">No data available.</div>
@@ -184,7 +196,7 @@ export function ReportsTable() {
         <Card>
           <CardHeader>
             <CardTitle>Benturan Kepentingan</CardTitle>
-            <CardDescription>Laporan Benturan Kepentingan</CardDescription>
+            <CardDescription>Laporan Benturan Kepentingan {year}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">No data available.</div>

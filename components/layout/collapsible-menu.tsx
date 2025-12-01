@@ -4,8 +4,8 @@ import * as React from "react"
 import { ChevronDown, LucideIcon } from "lucide-react"
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
-import { SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubItem, SidebarMenuSubButton } from "@/components/ui/sidebar"
-import { cn } from "@/lib/utils"
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+
 
 interface SubItem {
   title: string
@@ -26,13 +26,14 @@ export function CollapsibleMenu({ title, icon: Icon, items, isActive = false, ic
   const contentRef = React.useRef<HTMLUListElement>(null)
   const chevronRef = React.useRef<SVGSVGElement>(null)
 
-  const { contextSafe } = useGSAP({ scope: containerRef })
 
-  const toggleOpen = contextSafe(() => {
-    const newOpenState = !isOpen
-    setIsOpen(newOpenState)
 
-    if (newOpenState) {
+  const toggleOpen = () => {
+    setIsOpen((prev) => !prev)
+  }
+
+  useGSAP(() => {
+    if (isOpen) {
       gsap.to(contentRef.current, {
         height: "auto",
         opacity: 1,
@@ -57,17 +58,9 @@ export function CollapsibleMenu({ title, icon: Icon, items, isActive = false, ic
         ease: "power2.in",
       })
     }
-  })
+  }, { scope: containerRef, dependencies: [isOpen] })
 
-  React.useEffect(() => {
-    if (isOpen) {
-      gsap.set(contentRef.current, { height: "auto", opacity: 1 })
-      gsap.set(chevronRef.current, { rotation: 180 })
-    } else {
-      gsap.set(contentRef.current, { height: 0, opacity: 0 })
-      gsap.set(chevronRef.current, { rotation: 0 })
-    }
-  }, [])
+
 
   return (
     <div ref={containerRef}>

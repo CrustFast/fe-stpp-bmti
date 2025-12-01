@@ -55,9 +55,9 @@ export default function DashboardPage() {
           </Select>
         </div>
       </div>
-      <StatsCards />
-      <DashboardCharts />
-      <ReportsTable />
+      <StatsCards year={year} period={period} />
+      <DashboardCharts year={year} period={period} />
+      <ReportsTable year={year} period={period} />
     </div>
   )
 }

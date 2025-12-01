@@ -297,7 +297,7 @@ export function GratifikasiForm() {
             <FormField
               control={form.control}
               name="bukti_files"
-              render={({ field }) => (
+              render={() => (
                 <FormItem className="sm:col-span-2 mt-2">
                   <FormLabel>
                     Foto(Bukti) / Dokumen <span className="text-red-600">*</span>
