@@ -34,6 +34,8 @@ import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, 
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { useRouter } from "next/navigation"
+import { generatePDF } from "@/lib/pdf-export"
+import { toast } from "sonner"
 
 interface ReportsTableProps {
   year: string
@@ -66,6 +68,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
   const [loading, setLoading] = React.useState(true)
   const [page, setPage] = React.useState(1)
   const [search, setSearch] = React.useState("")
+  const [exporting, setExporting] = React.useState(false)
 
   React.useEffect(() => {
     const fetchReports = async () => {
@@ -114,6 +117,28 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
     }
   }
 
+  const handleExportPDF = async () => {
+    setExporting(true)
+    try {
+      const queryParams = new URLSearchParams({
+        year,
+        period: period === "all" ? "all" : period,
+      })
+
+      const res = await fetch(`${API_URL}/api/v1/dumas/rekap?${queryParams}`)
+      if (!res.ok) throw new Error("Failed to fetch report data")
+      const json = await res.json()
+
+      generatePDF(json.data)
+      toast.success("Berhasil mengunduh laporan PDF")
+    } catch (error) {
+      console.error("Error exporting PDF:", error)
+      toast.error("Gagal mengunduh laporan PDF")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <Tabs value={category} onValueChange={setCategory} className="w-full space-y-4">
       <TabsList className="bg-transparent p-0 h-auto space-x-6 justify-start border-b w-full rounded-none">
@@ -154,14 +179,14 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
             <Button variant="outline" className="h-8">View all</Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-8 gap-2 px-3">
+                <Button variant="outline" className="h-8 gap-2 px-3" disabled={exporting}>
                   <Download className="h-3.5 w-3.5" />
-                  <span className="text-sm">Export</span>
+                  <span className="text-sm">{exporting ? "Exporting..." : "Export"}</span>
                   <ChevronDown className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
                   <FileText className="mr-2 h-4 w-4" />
                   <span>PDF</span>
                 </DropdownMenuItem>
