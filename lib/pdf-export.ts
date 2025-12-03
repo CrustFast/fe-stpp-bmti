@@ -111,7 +111,7 @@ export const generatePDF = async (data: ReportData) => {
     }
   })
 
-  // @ts-ignore
+  // @ts-expect-error
   let currentY = doc.lastAutoTable.finalY + 10
 
   doc.setFont("times", "bold")
@@ -183,7 +183,7 @@ export const generatePDF = async (data: ReportData) => {
     },
   })
 
-  // @ts-ignore
+  // @ts-expect-error
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 2. Klasifikasi Pengaduan ---
@@ -230,7 +230,7 @@ export const generatePDF = async (data: ReportData) => {
     },
   })
 
-  // @ts-ignore
+  // @ts-expect-error
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 3. Pengaduan Masyarakat (Matrix) ---
@@ -321,14 +321,14 @@ export const generatePDF = async (data: ReportData) => {
       if (data.row.index === matrixBody.length - 1) {
         data.cell.styles.fontStyle = "bold"
       }
-      // @ts-ignore
+      // @ts-expect-error
       if (data.row.raw[0]?.colSpan) {
         data.cell.styles.halign = 'left'
       }
     }
   })
 
-  // @ts-ignore
+  // @ts-expect-error
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 4. Tindak Lanjut ---
@@ -387,7 +387,7 @@ export const generatePDF = async (data: ReportData) => {
   })
 
   // --- Keterangan & Signature ---
-  // @ts-ignore
+  // @ts-expect-error
   currentY = doc.lastAutoTable.finalY + 10
 
   if (currentY > 150) {
