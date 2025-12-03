@@ -3,7 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ReactLenis } from 'lenis/react';
 import "./globals.css";
 
-import ScrollToTop from '@/components/common/ScrollToTop'; 
+import ScrollToTop from '@/components/common/ScrollToTop';
+import NextTopLoader from 'nextjs-toploader';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white min-h-screen`}
       >
+        <NextTopLoader />
         <ScrollToTop />
         <ReactLenis root options={{ duration: 1.2, smoothWheel: true }}>
           {children}
