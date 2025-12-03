@@ -111,7 +111,7 @@ export const generatePDF = async (data: ReportData) => {
     }
   })
 
-  // @ts-expect-error
+  // @ts-expect-error: jspdf-autotable adds lastAutoTable to jsPDF instance
   let currentY = doc.lastAutoTable.finalY + 10
 
   doc.setFont("times", "bold")
@@ -183,7 +183,7 @@ export const generatePDF = async (data: ReportData) => {
     },
   })
 
-  // @ts-expect-error
+  // @ts-expect-error: jspdf-autotable adds lastAutoTable to jsPDF instance
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 2. Klasifikasi Pengaduan ---
@@ -230,7 +230,7 @@ export const generatePDF = async (data: ReportData) => {
     },
   })
 
-  // @ts-expect-error
+  // @ts-expect-error: jspdf-autotable adds lastAutoTable to jsPDF instance
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 3. Pengaduan Masyarakat (Matrix) ---
@@ -321,14 +321,14 @@ export const generatePDF = async (data: ReportData) => {
       if (data.row.index === matrixBody.length - 1) {
         data.cell.styles.fontStyle = "bold"
       }
-      // @ts-expect-error
+      // @ts-expect-error: row.raw is not typed in jspdf-autotable definitions
       if (data.row.raw[0]?.colSpan) {
         data.cell.styles.halign = 'left'
       }
     }
   })
 
-  // @ts-expect-error
+  // @ts-expect-error: jspdf-autotable adds lastAutoTable to jsPDF instance
   currentY = doc.lastAutoTable.finalY + 10
 
   // --- 4. Tindak Lanjut ---
@@ -387,7 +387,7 @@ export const generatePDF = async (data: ReportData) => {
   })
 
   // --- Keterangan & Signature ---
-  // @ts-expect-error
+  // @ts-expect-error: jspdf-autotable adds lastAutoTable to jsPDF instance
   currentY = doc.lastAutoTable.finalY + 10
 
   if (currentY > 150) {
