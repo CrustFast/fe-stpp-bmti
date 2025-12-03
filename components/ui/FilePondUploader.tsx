@@ -7,6 +7,7 @@ import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
 
+import { FilePondFile } from 'filepond';
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
@@ -46,9 +47,9 @@ export function FilePondUploader<T extends FieldValues>({
     fieldState: { error },
   } = useController({ name, control });
 
-  const pond = useRef<any>(null);
+  const pond = useRef<FilePond | null>(null);
 
-  const handleUpdateFiles = (fileItems: any[]) => {
+  const handleUpdateFiles = (fileItems: FilePondFile[]) => {
     const ids = fileItems.map((fileItem) => fileItem.serverId).filter((id) => typeof id === 'string');
     onChange(ids);
   };
