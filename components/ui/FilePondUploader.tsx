@@ -1,11 +1,13 @@
 'use client';
 
+import { useRef } from 'react';
 import { FilePond, registerPlugin } from 'react-filepond';
 import FilePondPluginImageExifOrientation from 'filepond-plugin-image-exif-orientation';
 import FilePondPluginImagePreview from 'filepond-plugin-image-preview';
 import FilePondPluginFileValidateType from 'filepond-plugin-file-validate-type';
 import FilePondPluginFileValidateSize from 'filepond-plugin-file-validate-size';
 
+import { FilePondFile } from 'filepond';
 import 'filepond/dist/filepond.min.css';
 import 'filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css';
 
@@ -23,7 +25,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080';
 
 interface UploaderProps<T extends FieldValues> {
   control: Control<T>;
-  name: Path<T>;              // pastikan ada di schema form
+  name: Path<T>;
   label?: string;
   helperText?: string;
   maxFiles?: number;
@@ -45,11 +47,19 @@ export function FilePondUploader<T extends FieldValues>({
     fieldState: { error },
   } = useController({ name, control });
 
+  const pond = useRef<FilePond | null>(null);
+
+  const handleUpdateFiles = (fileItems: FilePondFile[]) => {
+    const ids = fileItems.map((fileItem) => fileItem.serverId).filter((id) => typeof id === 'string');
+    onChange(ids);
+  };
+
   return (
     <div className="space-y-2">
       {label && <label className="block text-sm font-medium text-gray-700">{label}</label>}
       <FilePond
-        name="file" // nama field multipart yang dikirim tiap file
+        ref={pond}
+        name="file"
         instantUpload
         allowMultiple={allowMultiple}
         maxFiles={maxFiles}
@@ -66,9 +76,7 @@ export function FilePondUploader<T extends FieldValues>({
             method: 'POST',
             withCredentials: false,
             onload: (res: string) => {
-              const id = res.trim();          // filename / ID dari backend
-              const arr = Array.isArray(value) ? [...value, id] : [id];
-              onChange(arr);
+              const id = res.trim();
               return id;
             },
             onerror: (err: unknown) => console.error('Upload error', err),
@@ -78,11 +86,15 @@ export function FilePondUploader<T extends FieldValues>({
               method: 'DELETE',
               body: uniqueFileId,
             }).finally(() => {
-              const arr = (Array.isArray(value) ? value : []).filter(id => id !== uniqueFileId);
-              onChange(arr);
               load();
             });
           },
+        }}
+        onupdatefiles={(fileItems) => handleUpdateFiles(fileItems)}
+        onprocessfile={(error, file) => {
+          if (!error && pond.current) {
+            handleUpdateFiles(pond.current.getFiles());
+          }
         }}
         labelIdle='Tarik & letakkan foto/PDF atau <span class="filepond--label-action">Pilih File</span>'
         credits={false}
