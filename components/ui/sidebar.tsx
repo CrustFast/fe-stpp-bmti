@@ -143,6 +143,7 @@ function SidebarProvider({
             className
           )}
           {...props}
+          suppressHydrationWarning
         >
           {children}
         </div>

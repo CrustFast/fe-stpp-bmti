@@ -15,7 +15,14 @@ async function refreshAccessToken(token: JWT) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh_token: token.refreshToken }),
     })
-    const refreshedTokens = await response.json()
+    const text = await response.text()
+    let refreshedTokens
+    try {
+      refreshedTokens = JSON.parse(text)
+    } catch (e) {
+      console.error("RefreshAccessTokenError: Invalid JSON response", text)
+      throw new Error("Invalid JSON response from refresh token endpoint")
+    }
     if (!response.ok) {
       throw refreshedTokens
     }
@@ -53,7 +60,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ email, password })
             });
-            const user = await res.json();
+            const text = await res.text();
+            let user;
+            try {
+              user = JSON.parse(text);
+            } catch (e) {
+              console.error("LoginError: Invalid JSON response", text);
+              return null;
+            }
             console.log("Login response:", user);
             if (res.ok && user.access_token) {
               return {

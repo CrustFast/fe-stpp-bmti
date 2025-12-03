@@ -31,6 +31,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { format } from "date-fns"
+import { id } from "date-fns/locale"
+import { useRouter } from "next/navigation"
 
 interface ReportsTableProps {
   year: string
@@ -38,11 +41,12 @@ interface ReportsTableProps {
 }
 
 interface Report {
-  code: string
-  name: string
-  type: string
+  id: number
+  kode_pengaduan: string
+  nama: string
+  tipe: string
   status: string
-  date: string
+  tanggal_pengaduan: string
 }
 
 interface Pagination {
@@ -55,6 +59,7 @@ interface Pagination {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export function ReportsTable({ year, period }: ReportsTableProps) {
+  const router = useRouter()
   const [category, setCategory] = React.useState("pengaduan")
   const [reports, setReports] = React.useState<Report[]>([])
   const [pagination, setPagination] = React.useState<Pagination | null>(null)
@@ -68,18 +73,18 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
       try {
         const queryParams = new URLSearchParams({
           year,
-          period,
+          period: period === "all" ? "year" : period,
           category,
           page: page.toString(),
           limit: "10",
           search
         })
 
-        const res = await fetch(`${API_URL}/api/reports?${queryParams}`)
+        const res = await fetch(`${API_URL}/api/v1/dumas?${queryParams}`)
         if (!res.ok) throw new Error("Failed to fetch reports")
         const json = await res.json()
-        setReports(json.data.reports)
-        setPagination(json.data.pagination)
+        setReports(json.data?.data || [])
+        setPagination(json.data?.pagination || null)
       } catch (error) {
         console.error("Error fetching reports:", error)
         setReports([])
@@ -206,18 +211,24 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                   </TableRow>
                 ) : (
                   reports.map((report) => (
-                    <TableRow key={report.code}>
-                      <TableCell className="font-medium">{report.code}</TableCell>
-                      <TableCell>{report.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{report.type}</TableCell>
+                    <TableRow key={report.id}>
+                      <TableCell className="font-medium">{report.kode_pengaduan}</TableCell>
+                      <TableCell>{report.nama}</TableCell>
+                      <TableCell className="text-muted-foreground">{report.tipe}</TableCell>
                       <TableCell>
                         <Badge variant="secondary" className="bg-emerald-100 text-emerald-600 hover:bg-emerald-100">
                           <span className="mr-1">●</span> {report.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{report.date}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {format(new Date(report.tanggal_pengaduan), "dd MMMM yyyy", { locale: id })}
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" className="text-blue-600 hover:text-blue-700 font-medium">
+                        <Button
+                          variant="ghost"
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                          onClick={() => router.push(`/dashboard/sigap/${report.id}/edit`)}
+                        >
                           Edit
                         </Button>
                       </TableCell>
