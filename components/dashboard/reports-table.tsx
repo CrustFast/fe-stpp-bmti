@@ -226,7 +226,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
-                          className="text-blue-600 hover:text-blue-700 font-medium"
+                          className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
                           onClick={() => router.push(`/dashboard/sigap/${report.id}/edit`)}
                         >
                           Edit
