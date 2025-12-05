@@ -74,16 +74,34 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
     const fetchReports = async () => {
       setLoading(true)
       try {
-        const queryParams = new URLSearchParams({
+        let endpoint = `${API_URL}/api/v1/dumas`
+        const params: Record<string, string> = {
           year,
           period: period === "all" ? "year" : period,
-          category,
           page: page.toString(),
           limit: "10",
           search
-        })
+        }
 
-        const res = await fetch(`${API_URL}/api/v1/dumas?${queryParams}`)
+        if (category === "pengaduan") {
+          endpoint = `${API_URL}/api/v1/dumas`
+        } else if (category === "permintaan-informasi") {
+          endpoint = `${API_URL}/api/v1/permintaan-informasi`
+        } else if (category === "saran") {
+          endpoint = `${API_URL}/api/v1/saran`
+        } else if (category === "gratifikasi") {
+          endpoint = `${API_URL}/api/v1/gratifikasi`
+        } else if (category === "benturan") {
+          endpoint = `${API_URL}/api/v1/benturan-kepentingan`
+        } else {
+          // Fallback
+          endpoint = `${API_URL}/api/v1/dumas`
+          params.category = category
+        }
+
+        const queryParams = new URLSearchParams(params)
+        const res = await fetch(`${endpoint}?${queryParams}`)
+
         if (!res.ok) throw new Error("Failed to fetch reports")
         const json = await res.json()
         setReports(json.data?.data || [])
@@ -113,6 +131,8 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
       case "gratifikasi": return "Gratifikasi"
       case "benturan": return "Benturan Kepentingan"
       case "pengaduan": return "Pengaduan"
+      case "permintaan-informasi": return "Permintaan Informasi"
+      case "saran": return "Saran"
       default: return "Laporan"
     }
   }
@@ -141,7 +161,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
 
   return (
     <Tabs value={category} onValueChange={setCategory} className="w-full space-y-4">
-      <TabsList className="bg-transparent p-0 h-auto space-x-6 justify-start border-b w-full rounded-none">
+      <TabsList className="bg-transparent p-0 h-auto space-x-6 justify-start border-b w-full rounded-none overflow-x-auto">
         <TabsTrigger
           value="gratifikasi"
           className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none px-0 pb-2 text-muted-foreground gap-2 shadow-none ring-0 focus-visible:ring-0 border-0"
@@ -162,6 +182,20 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
         >
           <FileText className="h-4 w-4" />
           PENGADUAN
+        </TabsTrigger>
+        <TabsTrigger
+          value="permintaan-informasi"
+          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none px-0 pb-2 text-muted-foreground gap-2 shadow-none ring-0 focus-visible:ring-0 border-0"
+        >
+          <FileText className="h-4 w-4" />
+          PERMINTAAN INFORMASI
+        </TabsTrigger>
+        <TabsTrigger
+          value="saran"
+          className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 rounded-none px-0 pb-2 text-muted-foreground gap-2 shadow-none ring-0 focus-visible:ring-0 border-0"
+        >
+          <FileText className="h-4 w-4" />
+          SARAN
         </TabsTrigger>
       </TabsList>
 
@@ -251,8 +285,8 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
-                          className="text-blue-600 hover:text-blue-700 font-medium cursor-pointer"
-                          onClick={() => router.push(`/dashboard/sigap/${report.id}/edit`)}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                          onClick={() => router.push(`/dashboard/sigap/${report.id}/edit?category=${category}`)}
                         >
                           Edit
                         </Button>

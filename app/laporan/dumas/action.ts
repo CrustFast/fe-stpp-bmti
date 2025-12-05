@@ -59,12 +59,12 @@ export async function submitLaporanBenturan(formData: FormData) {
 export async function submitLaporanDumas(formData: FormData) {
   const klasifikasi = formData.get('klasifikasi_laporan');
 
-  let endpointPath = "/api/laporan/pengaduan";
-  if (klasifikasi === 'permintaan-informasi' || klasifikasi === 'permintaan_informasi') {
-    endpointPath = "/api/laporan/permintaan-informasi";
-  } else if (klasifikasi === 'saran') {
-    endpointPath = "/api/laporan/saran";
-  }
+  const endpointPath = "/api/laporan/dumas";
+  // if (klasifikasi === 'permintaan-informasi' || klasifikasi === 'permintaan_informasi') {
+  //   endpointPath = "/api/laporan/permintaan-informasi";
+  // } else if (klasifikasi === 'saran') {
+  //   endpointPath = "/api/laporan/saran";
+  // }
 
   console.log("Mengirim ke backend:", API_URL + endpointPath);
 

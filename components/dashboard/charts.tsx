@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, Pie, PieChart, Label } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, Cell, Pie, PieChart, PieLabelRenderProps } from "recharts"
 
 import {
   Card,
@@ -24,13 +24,14 @@ interface DashboardChartsProps {
 
 interface BarData {
   month: string
-  desktop: number
-  mobile: number
+  pengaduan: number
+  permintaan_informasi: number
+  saran: number
 }
 
 interface PieData {
-  browser: string
-  visitors: number
+  name: string
+  value: number
   fill: string
 }
 
@@ -42,41 +43,63 @@ interface ChartsData {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 const barChartConfig = {
-  desktop: {
-    label: "Desktop",
+  pengaduan: {
+    label: "Pengaduan",
     color: "hsl(var(--chart-1))",
   },
-  mobile: {
-    label: "Mobile",
+  permintaan_informasi: {
+    label: "Permintaan Informasi",
     color: "hsl(var(--chart-2))",
+  },
+  saran: {
+    label: "Saran",
+    color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig
 
-const pieChartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  chrome: {
-    label: "Chrome",
-    color: "hsl(var(--chart-1))",
-  },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "hsl(var(--chart-3))",
-  },
-  edge: {
-    label: "Edge",
-    color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig
+// #region Pie Chart Custom Label
+const RADIAN = Math.PI / 180;
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent }: PieLabelRenderProps) => {
+  if (cx == null || cy == null || innerRadius == null || outerRadius == null) {
+    return null;
+  }
+  const radius = Number(innerRadius) + (Number(outerRadius) - Number(innerRadius)) * 0.5;
+  const ncx = Number(cx);
+  const x = ncx + radius * Math.cos(-(midAngle ?? 0) * RADIAN);
+  const ncy = Number(cy);
+  const y = ncy + radius * Math.sin(-(midAngle ?? 0) * RADIAN);
+
+  return (
+    <text x={x} y={y} fill="white" textAnchor={x > ncx ? 'start' : 'end'} dominantBaseline="central">
+      {`${((percent ?? 1) * 100).toFixed(0)}%`}
+    </text>
+  );
+};
+
+function PieChartWithCustomizedLabel({ data, isAnimationActive = true }: { data: PieData[], isAnimationActive?: boolean }) {
+  return (
+    <PieChart width={250} height={250}>
+      <Pie
+        data={data}
+        cx="50%"
+        cy="50%"
+        labelLine={false}
+        label={renderCustomizedLabel}
+        fill="#8884d8"
+        dataKey="value"
+        isAnimationActive={isAnimationActive}
+        outerRadius={80}
+      >
+        {data.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
+      </Pie>
+    </PieChart>
+  );
+}
+// #endregion
 
 export function DashboardCharts({ year, period }: DashboardChartsProps) {
   const [data, setData] = React.useState<ChartsData | null>(null)
@@ -103,10 +126,13 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
     return () => clearInterval(interval)
   }, [year, period])
 
-  const totalVisitors = React.useMemo(() => {
-    if (!data?.distribution) return 0
-    return data.distribution.reduce((acc, curr) => acc + curr.visitors, 0)
-  }, [data])
+  const formatMonth = (month: string) => {
+    const monthMap: Record<string, string> = {
+      Jan: "Januari", Feb: "Februari", Mar: "Maret", Apr: "April", May: "Mei", Jun: "Juni",
+      Jul: "Juli", Aug: "Agustus", Sep: "September", Oct: "Oktober", Nov: "November", Dec: "Desember"
+    }
+    return monthMap[month] || month
+  }
 
   if (loading || !data) {
     return (
@@ -137,8 +163,8 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
       <Card className="col-span-4">
         <CardHeader>
-          <CardTitle>Overview</CardTitle>
-          <CardDescription>Monthly data overview for {year} {period !== "all" ? `(${period.toUpperCase()})` : ""}</CardDescription>
+          <CardTitle>Laporan Dumas</CardTitle>
+          <CardDescription>Laporan Dumas per bulan di {year}</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
@@ -149,11 +175,12 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
-                tickFormatter={(value) => value.slice(0, 3)}
+                tickFormatter={(value) => formatMonth(value).slice(0, 3)}
               />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-              <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+              <Bar dataKey="pengaduan" fill="var(--color-pengaduan)" radius={4} />
+              <Bar dataKey="permintaan_informasi" fill="var(--color-permintaan_informasi)" radius={4} />
+              <Bar dataKey="saran" fill="var(--color-saran)" radius={4} />
             </BarChart>
           </ChartContainer>
         </CardContent>
@@ -161,57 +188,21 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
       <Card className="col-span-3">
         <CardHeader>
           <CardTitle>Distribution</CardTitle>
-          <CardDescription>Visitor distribution by browser</CardDescription>
+          <CardDescription>Report distribution by type</CardDescription>
         </CardHeader>
-        <CardContent className="flex-1 pb-0">
-          <ChartContainer
-            config={pieChartConfig}
-            className="mx-auto aspect-square max-h-[250px]"
-          >
-            <PieChart>
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Pie
-                data={data.distribution}
-                dataKey="visitors"
-                nameKey="browser"
-                innerRadius={60}
-                strokeWidth={5}
-              >
-                <Label
-                  content={({ viewBox }) => {
-                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                      return (
-                        <text
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          <tspan
-                            x={viewBox.cx}
-                            y={viewBox.cy}
-                            className="fill-foreground text-3xl font-bold"
-                          >
-                            {totalVisitors.toLocaleString()}
-                          </tspan>
-                          <tspan
-                            x={viewBox.cx}
-                            y={(viewBox.cy || 0) + 24}
-                            className="fill-muted-foreground"
-                          >
-                            Visitors
-                          </tspan>
-                        </text>
-                      )
-                    }
-                  }}
-                />
-              </Pie>
-            </PieChart>
-          </ChartContainer>
+        <CardContent className="flex flex-col justify-center items-center pb-0">
+          <PieChartWithCustomizedLabel data={data.distribution} />
+          <div className="mt-4 grid grid-cols-2 gap-4 w-full">
+            {data.distribution.map((item, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{item.name}</span>
+                  <span className="text-xs text-muted-foreground">{item.value} Laporan</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

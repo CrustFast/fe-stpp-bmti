@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ChevronRight, Download, X } from "lucide-react"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
@@ -95,8 +95,10 @@ const formatDate = (dateString?: string) => {
 
 export default function EditReportPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
   const id = params.id as string
+  const category = searchParams.get("category")
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -104,14 +106,28 @@ export default function EditReportPage() {
   const [status, setStatus] = useState("")
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
+  const getApiType = (cat: string | null) => {
+    switch (cat) {
+      case "pengaduan": return "dumas"
+      case "permintaan-informasi": return "permintaan-informasi"
+      case "saran": return "saran"
+      case "gratifikasi": return "gratifikasi"
+      case "benturan": return "benturan-kepentingan"
+      default: return "dumas"
+    }
+  }
+
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/v1/dumas/${id}`)
+        const apiType = getApiType(category)
+        const endpoint = `${API_URL}/api/v1/${apiType}/${id}`
+
+        const res = await fetch(endpoint)
         if (!res.ok) throw new Error("Failed to fetch report")
         const json = await res.json()
         const data = json.data
-        console.log("Report Data:", data) // Debugging log
+        console.log("Report Data:", data)
         setReport(data)
         setStatus(data.Status?.toLowerCase() || "")
       } catch (error) {
@@ -125,12 +141,15 @@ export default function EditReportPage() {
     if (id) {
       fetchReport()
     }
-  }, [id])
+  }, [id, category])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      const res = await fetch(`${API_URL}/api/v1/dumas/${id}`, {
+      const apiType = getApiType(category)
+      const endpoint = `${API_URL}/api/v1/${apiType}/${id}`
+
+      const res = await fetch(endpoint, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -396,19 +415,17 @@ export default function EditReportPage() {
                     </div>
                   </div>
                 )}
-
                 <div className="grid grid-cols-4 items-start gap-4 mt-6 border-t pt-4">
                   <Label className="mt-2">Isi Pengaduan</Label>
                   <Textarea value={report.IsiLaporanPengaduan || "-"} readOnly className="col-span-3 bg-muted/50 min-h-[100px]" />
                 </div>
 
-                {/* Bukti Lampiran */}
-                {buktiFoto.length > 0 && (
+                {/* Bukti Lampiran - Pengaduan */}
+                {report.KlasifikasiLaporan === 'pengaduan' && buktiFoto.length > 0 && (
                   <div className="space-y-4 mt-6 border-t pt-4">
                     <h4 className="font-medium text-muted-foreground">Bukti Lampiran</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {buktiFoto.map((path, index) => {
-                        // Ensure path starts with / if not absolute
                         const fullPath = path.startsWith('http') ? path : `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
                         return (
                           <div key={index} className="relative group aspect-square rounded-lg overflow-hidden border bg-muted cursor-pointer">
@@ -427,7 +444,7 @@ export default function EditReportPage() {
               </>
             )}
 
-            {/* --- PERMINTAAN INFORMASI SECTION --- */}
+            {/* --- PERMINTAAN INFORMASI --- */}
             {(report.KlasifikasiLaporan === 'permintaan-informasi' || report.KlasifikasiLaporan === 'permintaan_informasi') && (
               <div className="space-y-4 mt-4">
                 <div className="grid gap-4">
@@ -451,7 +468,7 @@ export default function EditReportPage() {
               </div>
             )}
 
-            {/* --- SARAN SECTION --- */}
+            {/* --- SARAN --- */}
             {report.KlasifikasiLaporan === 'saran' && (
               <div className="space-y-4 mt-4">
                 <div className="grid gap-4">
