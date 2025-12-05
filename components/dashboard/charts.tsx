@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, Cell, Pie, PieChart, PieLabelRenderProps } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell, Pie, PieChart, PieLabelRenderProps, LabelList } from "recharts"
 
 import {
   Card,
@@ -17,47 +17,38 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 
-interface DashboardChartsProps {
-  year: string
-  period: string
+export interface CategoryStat {
+  no: number
+  kode: string
+  nama: string
+  jumlah: number
 }
 
-interface BarData {
-  month: string
-  pengaduan: number
-  permintaan_informasi: number
-  saran: number
-}
-
-interface PieData {
+export interface PieData {
   name: string
   value: number
   fill: string
 }
 
-interface ChartsData {
-  overview: BarData[]
+export interface ChartsData {
+  categories: CategoryStat[]
   distribution: PieData[]
+}
+
+interface DashboardChartsProps {
+  data: ChartsData | null
+  loading: boolean
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
-const barChartConfig = {
-  pengaduan: {
-    label: "Pengaduan",
-    color: "hsl(var(--chart-1))",
-  },
-  permintaan_informasi: {
-    label: "Permintaan Informasi",
-    color: "hsl(var(--chart-2))",
-  },
-  saran: {
-    label: "Saran",
-    color: "hsl(var(--chart-3))",
+const chartConfig = {
+  jumlah: {
+    label: "Jumlah",
+    color: "#2563eb",
   },
 } satisfies ChartConfig
 
-// #region Pie Chart Custom Label
 const RADIAN = Math.PI / 180;
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
@@ -99,41 +90,8 @@ function PieChartWithCustomizedLabel({ data, isAnimationActive = true }: { data:
     </PieChart>
   );
 }
-// #endregion
 
-export function DashboardCharts({ year, period }: DashboardChartsProps) {
-  const [data, setData] = React.useState<ChartsData | null>(null)
-  const [loading, setLoading] = React.useState(true)
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/dashboard/summary?year=${year}&period=${period}`)
-        if (!res.ok) throw new Error("Failed to fetch charts")
-        const json = await res.json()
-        setData(json.data.charts)
-      } catch (error) {
-        console.error("Error fetching charts:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-
-    const interval = setInterval(fetchData, 10000)
-
-    return () => clearInterval(interval)
-  }, [year, period])
-
-  const formatMonth = (month: string) => {
-    const monthMap: Record<string, string> = {
-      Jan: "Januari", Feb: "Februari", Mar: "Maret", Apr: "April", May: "Mei", Jun: "Juni",
-      Jul: "Juli", Aug: "Agustus", Sep: "September", Oct: "Oktober", Nov: "November", Dec: "Desember"
-    }
-    return monthMap[month] || month
-  }
-
+export function DashboardCharts({ data, loading }: DashboardChartsProps) {
   if (loading || !data) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -143,7 +101,7 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
             <div className="h-4 w-48 bg-gray-200 rounded animate-pulse mt-2" />
           </CardHeader>
           <CardContent>
-            <div className="h-[200px] w-full bg-gray-100 animate-pulse" />
+            <div className="h-[400px] w-full bg-gray-100 animate-pulse" />
           </CardContent>
         </Card>
         <Card className="col-span-3">
@@ -163,32 +121,54 @@ export function DashboardCharts({ year, period }: DashboardChartsProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
       <Card className="col-span-4">
         <CardHeader>
-          <CardTitle>Laporan Dumas</CardTitle>
-          <CardDescription>Laporan Dumas per bulan di {year}</CardDescription>
+          <CardTitle>Statistik Kategori Pengaduan</CardTitle>
+          <CardDescription>Jumlah laporan berdasarkan kategori</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={barChartConfig} className="min-h-[200px] w-full">
-            <BarChart accessibilityLayer data={data.overview}>
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="month"
+          <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+            <BarChart
+              accessibilityLayer
+              data={data.categories}
+              layout="vertical"
+              margin={{
+                top: 5,
+                right: 30,
+                left: 20,
+                bottom: 5,
+              }}
+            >
+              <CartesianGrid horizontal={false} />
+              <YAxis
+                dataKey="nama"
+                type="category"
                 tickLine={false}
                 tickMargin={10}
                 axisLine={false}
-                tickFormatter={(value) => formatMonth(value).slice(0, 3)}
+                width={150}
+                style={{ fontSize: '12px' }}
               />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="pengaduan" fill="var(--color-pengaduan)" radius={4} />
-              <Bar dataKey="permintaan_informasi" fill="var(--color-permintaan_informasi)" radius={4} />
-              <Bar dataKey="saran" fill="var(--color-saran)" radius={4} />
+              <XAxis type="number" hide />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="line" />}
+              />
+              <Bar dataKey="jumlah" fill="var(--color-jumlah)" radius={4}>
+                <LabelList
+                  dataKey="jumlah"
+                  position="right"
+                  offset={8}
+                  className="fill-foreground"
+                  fontSize={12}
+                />
+              </Bar>
             </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
       <Card className="col-span-3">
         <CardHeader>
-          <CardTitle>Distribution</CardTitle>
-          <CardDescription>Report distribution by type</CardDescription>
+          <CardTitle>Pembagian Laporan</CardTitle>
+          <CardDescription>Berdasarkan Pengaduan, Permintaan Informasi dan Saran</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col justify-center items-center pb-0">
           <PieChartWithCustomizedLabel data={data.distribution} />

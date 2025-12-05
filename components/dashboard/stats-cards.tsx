@@ -5,54 +5,28 @@ import {
 import { useEffect, useState } from "react"
 import { FileText, MessageSquare, CheckCircle, Clock } from "lucide-react"
 
-interface StatsCardsProps {
-  year: string
-  period: string
-}
-
-interface StatItem {
+export interface StatItem {
   name: string
   pending: number
   resolved: number
 }
 
-interface DashboardData {
+export interface DashboardData {
   stats: StatItem[]
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+interface StatsCardsProps {
+  data: DashboardData | null
+  loading: boolean
+}
 
-export function StatsCards({ year, period }: StatsCardsProps) {
-  const [data, setData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/dashboard/summary?year=${year}&period=${period}`)
-        if (!res.ok) throw new Error("Failed to fetch stats")
-        const json = await res.json()
-        setData(json.data)
-      } catch (error) {
-        console.error("Error fetching stats:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-
-    const interval = setInterval(fetchData, 10000)
-
-    return () => clearInterval(interval)
-  }, [year, period])
-
+export function StatsCards({ data, loading }: StatsCardsProps) {
   if (loading || !data) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="overflow-hidden">
-            <CardContent className="p-6">
+            <CardContent className="px-4 py-2">
               <div className="flex items-center space-x-4">
                 <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
                 <div className="space-y-2">
@@ -114,7 +88,7 @@ export function StatsCards({ year, period }: StatsCardsProps) {
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {cards.map((card, index) => (
         <Card key={index} className="overflow-hidden">
-          <CardContent className="p-6">
+          <CardContent className="px-4 py-2">
             <div className="space-y-1">
               <p className="text-sm font-medium text-muted-foreground">
                 {card.title}

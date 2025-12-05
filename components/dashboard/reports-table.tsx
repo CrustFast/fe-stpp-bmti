@@ -30,7 +30,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Clock } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { useRouter } from "next/navigation"
@@ -70,17 +70,38 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
   const [search, setSearch] = React.useState("")
   const [exporting, setExporting] = React.useState(false)
 
+  const [debouncedSearch, setDebouncedSearch] = React.useState(search)
+
   React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [search])
+
+  React.useEffect(() => {
+    const controller = new AbortController()
+    const signal = controller.signal
+
     const fetchReports = async () => {
       setLoading(true)
       try {
         let endpoint = `${API_URL}/api/v1/dumas`
+        const mapPeriod = (p: string) => {
+          if (p === "q1") return "triwulan_1"
+          if (p === "q2") return "triwulan_2"
+          if (p === "q3") return "triwulan_3"
+          if (p === "q4") return "triwulan_4"
+          return "all"
+        }
+
         const params: Record<string, string> = {
           year,
-          period: period === "all" ? "year" : period,
+          period: mapPeriod(period),
           page: page.toString(),
           limit: "10",
-          search
+          search: debouncedSearch
         }
 
         if (category === "pengaduan") {
@@ -94,37 +115,73 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
         } else if (category === "benturan") {
           endpoint = `${API_URL}/api/v1/benturan-kepentingan`
         } else {
-          // Fallback
           endpoint = `${API_URL}/api/v1/dumas`
           params.category = category
         }
 
         const queryParams = new URLSearchParams(params)
-        const res = await fetch(`${endpoint}?${queryParams}`)
+        const fullUrl = `${endpoint}?${queryParams}`
+        console.log("Fetching reports:", fullUrl)
 
-        if (!res.ok) throw new Error("Failed to fetch reports")
-        const json = await res.json()
-        setReports(json.data?.data || [])
-        setPagination(json.data?.pagination || null)
+        const res = await fetch(fullUrl, { signal })
+
+        if (!res.ok) throw new Error(`Failed to fetch reports: ${res.status} ${res.statusText}`)
+
+        const text = await res.text()
+        try {
+          const json = JSON.parse(text)
+
+          const apiPagination = json.data?.pagination
+          let paginationData = null
+
+          if (apiPagination) {
+            const total = apiPagination.total || 0
+            const limit = apiPagination.limit || 10
+            const totalPages = apiPagination.totalPages || Math.ceil(total / limit)
+
+            paginationData = {
+              ...apiPagination,
+              total,
+              limit,
+              totalPages
+            }
+          }
+
+          if (!signal.aborted) {
+            setReports(json.data?.data || [])
+            setPagination(paginationData)
+          }
+        } catch (e) {
+          console.error("Failed to parse reports JSON:", text)
+          if (!signal.aborted) setReports([])
+        }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
         console.error("Error fetching reports:", error)
-        setReports([])
+        if (!signal.aborted) setReports([])
       } finally {
-        setLoading(false)
+        if (!signal.aborted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchReports()
 
-    if (page === 1 && search === "") {
-      const interval = setInterval(fetchReports, 10000)
-      return () => clearInterval(interval)
+    if (page === 1 && debouncedSearch === "") {
+      const interval = setInterval(fetchReports, 30000)
+      return () => {
+        controller.abort()
+        clearInterval(interval)
+      }
     }
-  }, [year, period, category, page, search])
+
+    return () => controller.abort()
+  }, [year, period, category, page, debouncedSearch])
 
   React.useEffect(() => {
     setPage(1)
-  }, [year, period, category, search])
+  }, [year, period, category, debouncedSearch])
 
   const getCategoryLabel = (cat: string) => {
     switch (cat) {
@@ -249,7 +306,9 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                 <TableRow>
                   <TableHead className="font-bold text-xs uppercase text-muted-foreground">Kode Pengaduan</TableHead>
                   <TableHead className="font-bold text-xs uppercase text-muted-foreground">Nama</TableHead>
-                  <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tipe</TableHead>
+                  {category === "pengaduan" && (
+                    <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tipe</TableHead>
+                  )}
                   <TableHead className="font-bold text-xs uppercase text-muted-foreground">Status Pengaduan</TableHead>
                   <TableHead className="font-bold text-xs uppercase text-muted-foreground">Tanggal Pengaduan</TableHead>
                   <TableHead className="text-right"></TableHead>
@@ -258,13 +317,13 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={category === "pengaduan" ? 6 : 5} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : reports.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={category === "pengaduan" ? 6 : 5} className="h-24 text-center">
                       No results.
                     </TableCell>
                   </TableRow>
@@ -273,11 +332,31 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                     <TableRow key={report.id}>
                       <TableCell className="font-medium">{report.kode_pengaduan}</TableCell>
                       <TableCell>{report.nama}</TableCell>
-                      <TableCell className="text-muted-foreground">{report.tipe}</TableCell>
+                      {category === "pengaduan" && (
+                        <TableCell className="text-muted-foreground">{report.tipe}</TableCell>
+                      )}
                       <TableCell>
-                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-600 hover:bg-emerald-100">
-                          <span className="mr-1">●</span> {report.status}
-                        </Badge>
+                        {(() => {
+                          let badgeColor = "bg-gray-100 text-gray-600 hover:bg-gray-100"
+                          let Icon = FileText
+
+                          if (report.status.toLowerCase() === "baru") {
+                            badgeColor = "bg-red-100 text-red-600 hover:bg-red-100"
+                            Icon = CircleAlert
+                          } else if (report.status.toLowerCase() === "progres") {
+                            badgeColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-100"
+                            Icon = Clock
+                          } else if (report.status.toLowerCase() === "selesai") {
+                            badgeColor = "bg-emerald-100 text-emerald-600 hover:bg-emerald-100"
+                            Icon = CircleCheck
+                          }
+
+                          return (
+                            <Badge variant="secondary" className={badgeColor}>
+                              <Icon className="mr-1 h-3 w-3" /> {report.status}
+                            </Badge>
+                          )
+                        })()}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {format(new Date(report.tanggal_pengaduan), "dd MMMM yyyy", { locale: id })}
@@ -297,7 +376,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
               </TableBody>
             </Table>
           </div>
-          {pagination && pagination.totalPages > 1 && (
+          {pagination && (
             <div className="flex items-center justify-end space-x-2 py-4">
               <Button
                 variant="outline"
@@ -308,9 +387,35 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
-              <div className="text-sm text-muted-foreground">
-                Page {pagination.page} of {pagination.totalPages}
+
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (page <= 3) {
+                    pageNum = i + 1;
+                  } else if (page >= pagination.totalPages - 2) {
+                    pageNum = pagination.totalPages - 4 + i;
+                  } else {
+                    pageNum = page - 2 + i;
+                  }
+
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={page === pageNum ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setPage(pageNum)}
+                      disabled={loading}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
               </div>
+
               <Button
                 variant="outline"
                 size="sm"
