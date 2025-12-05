@@ -2,32 +2,28 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card"
-import { Area, AreaChart, ResponsiveContainer } from "recharts"
 import { useEffect, useState } from "react"
+import { FileText, MessageSquare, CheckCircle, Clock } from "lucide-react"
 
 interface StatsCardsProps {
   year: string
   period: string
 }
 
-interface TrendData {
-  value: number
-}
-
 interface StatItem {
-  total: string
-  trend: TrendData[]
+  name: string
+  pending: number
+  resolved: number
 }
 
-interface StatsData {
-  pengaduan: StatItem
-  konsultasi: StatItem
+interface DashboardData {
+  stats: StatItem[]
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export function StatsCards({ year, period }: StatsCardsProps) {
-  const [data, setData] = useState<StatsData | null>(null)
+  const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -36,7 +32,7 @@ export function StatsCards({ year, period }: StatsCardsProps) {
         const res = await fetch(`${API_URL}/api/dashboard/summary?year=${year}&period=${period}`)
         if (!res.ok) throw new Error("Failed to fetch stats")
         const json = await res.json()
-        setData(json.data.stats)
+        setData(json.data)
       } catch (error) {
         console.error("Error fetching stats:", error)
       } finally {
@@ -46,22 +42,24 @@ export function StatsCards({ year, period }: StatsCardsProps) {
 
     fetchData()
 
-    const interval = setInterval(fetchData, 5000)
+    const interval = setInterval(fetchData, 10000)
 
     return () => clearInterval(interval)
   }, [year, period])
 
   if (loading || !data) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        {[1, 2].map((i) => (
-          <Card key={i} className="overflow-hidden pb-0">
-            <CardContent className="px-6 pt-4 pb-0">
-              <div className="space-y-1 mb-8">
-                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-                <div className="h-8 w-32 bg-gray-200 rounded animate-pulse mt-2" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse" />
+                <div className="space-y-2">
+                  <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                  <div className="h-6 w-16 bg-gray-200 rounded animate-pulse" />
+                </div>
               </div>
-              <div className="h-[80px] -mx-6 bg-gray-100 animate-pulse" />
             </CardContent>
           </Card>
         ))}
@@ -69,68 +67,65 @@ export function StatsCards({ year, period }: StatsCardsProps) {
     )
   }
 
+  // Jumlah total
+  const totalPengaduan = data.stats.find(s => s.name === "Pengaduan")
+    ? (data.stats.find(s => s.name === "Pengaduan")!.pending + data.stats.find(s => s.name === "Pengaduan")!.resolved)
+    : 0
+
+  const totalInfo = data.stats.find(s => s.name === "Permintaan Informasi")
+    ? (data.stats.find(s => s.name === "Permintaan Informasi")!.pending + data.stats.find(s => s.name === "Permintaan Informasi")!.resolved)
+    : 0
+
+  const totalResolved = data.stats.reduce((acc, curr) => acc + curr.resolved, 0)
+  const totalPending = data.stats.reduce((acc, curr) => acc + curr.pending, 0)
+
+  const cards = [
+    {
+      title: "Total Pengaduan",
+      value: totalPengaduan,
+      icon: FileText,
+      color: "text-blue-600",
+      bg: "bg-blue-100",
+    },
+    {
+      title: "Total Permintaan Informasi",
+      value: totalInfo,
+      icon: MessageSquare,
+      color: "text-purple-600",
+      bg: "bg-purple-100",
+    },
+    {
+      title: "Laporan Sudah Ditangani",
+      value: totalResolved,
+      icon: CheckCircle,
+      color: "text-emerald-600",
+      bg: "bg-emerald-100",
+    },
+    {
+      title: "Laporan Belum Ditangani",
+      value: totalPending,
+      icon: Clock,
+      color: "text-amber-600",
+      bg: "bg-amber-100",
+    },
+  ]
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-      <Card className="overflow-hidden pb-0">
-        <CardContent className="px-6 pt-4 pb-0">
-          <div className="space-y-1 mb-8">
-            <p className="text-sm font-medium text-muted-foreground">
-              Total Pengaduan
-            </p>
-            <div className="text-3xl font-bold">{data.pengaduan.total}</div>
-          </div>
-          <div className="h-[80px] -mx-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.pengaduan.trend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorPengaduan" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorPengaduan)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="overflow-hidden pb-0">
-        <CardContent className="px-6 pt-4 pb-0">
-          <div className="space-y-1 mb-8">
-            <p className="text-sm font-medium text-muted-foreground">
-              Total Permintaan Konsultasi
-            </p>
-            <div className="text-3xl font-bold">{data.konsultasi.total}</div>
-          </div>
-          <div className="h-[80px] -mx-6">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.konsultasi.trend} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorKonsultasi" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorKonsultasi)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card, index) => (
+        <Card key={index} className="overflow-hidden">
+          <CardContent className="p-6">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                {card.title}
+              </p>
+              <div className="text-2xl font-bold">
+                {card.value}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   )
 }

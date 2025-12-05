@@ -380,12 +380,7 @@ export function LaporanForm() {
       console.log('Payload:', payload);
       console.log('fd klasifikasi_laporan =', fd.get('klasifikasi_laporan'));
 
-      let endpoint = '/api/laporan/pengaduan';
-      if (values.klasifikasi_laporan === 'permintaan-informasi') {
-        endpoint = '/api/laporan/permintaan-informasi';
-      } else if (values.klasifikasi_laporan === 'saran') {
-        endpoint = '/api/laporan/saran';
-      }
+      const endpoint = '/api/laporan/dumas';
 
       const res = await fetch(`${PUBLIC_API_BASE}${endpoint}`, { method: 'POST', body: fd });
       const text = await res.text();
