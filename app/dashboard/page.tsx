@@ -7,14 +7,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { StatsCards } from "@/components/dashboard/stats-cards"
-import { DashboardCharts } from "@/components/dashboard/charts"
+import { StatsCards, DashboardData } from "@/components/dashboard/stats-cards"
+import { DashboardCharts, ChartsData } from "@/components/dashboard/charts"
 import { ReportsTable } from "@/components/dashboard/reports-table"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 export default function DashboardPage() {
   const [year, setYear] = useState("2025")
   const [period, setPeriod] = useState("all")
+
+  const [statsData, setStatsData] = useState<DashboardData | null>(null)
+  const [chartsData, setChartsData] = useState<ChartsData | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const periodLabels: Record<string, string> = {
     all: "Setahun Penuh",
@@ -23,6 +29,61 @@ export default function DashboardPage() {
     q3: "Triwulan 3",
     q4: "Triwulan 4",
   }
+
+  useEffect(() => {
+    const controller = new AbortController()
+    const signal = controller.signal
+
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const mapPeriod = (p: string) => {
+          if (p === "q1") return "triwulan_1"
+          if (p === "q2") return "triwulan_2"
+          if (p === "q3") return "triwulan_3"
+          if (p === "q4") return "triwulan_4"
+          return "all"
+        }
+
+        const mappedPeriod = mapPeriod(period)
+        const [summaryRes, categoriesRes] = await Promise.all([
+          fetch(`${API_URL}/api/dashboard/summary?year=${year}&period=${mappedPeriod}`, { signal }),
+          fetch(`${API_URL}/api/v1/dumas/stats/categories?year=${year}&period=${mappedPeriod}`, { signal })
+        ])
+
+        if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.status}`)
+        if (!categoriesRes.ok) throw new Error(`Failed to fetch categories: ${categoriesRes.status}`)
+
+        const summaryJson = await summaryRes.json()
+        const categoriesJson = await categoriesRes.json()
+
+        if (!signal.aborted) {
+          setStatsData(summaryJson.data)
+          setChartsData({
+            categories: categoriesJson.data || [],
+            distribution: summaryJson.data?.charts?.distribution || []
+          })
+        }
+
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
+        console.error("Error fetching dashboard data:", error)
+      } finally {
+        if (!signal.aborted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchData()
+
+    const interval = setInterval(fetchData, 30000)
+
+    return () => {
+      controller.abort()
+      clearInterval(interval)
+    }
+  }, [year, period])
 
   return (
     <div className="flex flex-col space-y-6">
@@ -55,8 +116,8 @@ export default function DashboardPage() {
           </Select>
         </div>
       </div>
-      <StatsCards year={year} period={period} />
-      <DashboardCharts year={year} period={period} />
+      <StatsCards data={statsData} loading={loading} />
+      <DashboardCharts data={chartsData} loading={loading} />
       <ReportsTable year={year} period={period} />
     </div>
   )
