@@ -5,6 +5,7 @@ import "./globals.css";
 
 import ScrollToTop from '@/components/common/ScrollToTop';
 import NextTopLoader from 'nextjs-toploader';
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,11 +32,22 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white min-h-screen`}
       >
-        <NextTopLoader />
+        <NextTopLoader
+          color="#2563eb"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={false}
+          easing="ease"
+          speed={200}
+          shadow="0 0 10px #2563eb,0 0 5px #2563eb"
+        />
         <ScrollToTop />
         <ReactLenis root options={{ duration: 1.2, smoothWheel: true }}>
           {children}
         </ReactLenis>
+        <Toaster />
       </body>
     </html>
   );

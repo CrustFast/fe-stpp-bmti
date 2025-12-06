@@ -2,6 +2,9 @@
 
 import React, { useEffect } from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const PanduanComponent = () => {
   const handleStepHover = (e: React.MouseEvent<HTMLDivElement>, enter: boolean) => {
@@ -46,7 +49,7 @@ const PanduanComponent = () => {
             <div className="step-content">
               <div className="flex items-center justify-center w-16 h-16 shadow-md mx-auto mb-4 rounded-full bg-indigo-50 sm:w-20 sm:h-20">
                 <svg
-                  className="w-12 h-12 text-blue-600 sm:w-16 sm:h-16" 
+                  className="w-12 h-12 text-blue-600 sm:w-16 sm:h-16"
                   aria-hidden="true"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"

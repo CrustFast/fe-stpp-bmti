@@ -343,7 +343,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
                           if (report.status.toLowerCase() === "baru") {
                             badgeColor = "bg-red-100 text-red-600 hover:bg-red-100"
                             Icon = CircleAlert
-                          } else if (report.status.toLowerCase() === "progres") {
+                          } else if (report.status.toLowerCase() === "progres" || report.status.toLowerCase() === "proses") {
                             badgeColor = "bg-yellow-100 text-yellow-600 hover:bg-yellow-100"
                             Icon = Clock
                           } else if (report.status.toLowerCase() === "selesai") {

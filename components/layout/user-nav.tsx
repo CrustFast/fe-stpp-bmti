@@ -76,10 +76,6 @@ export function UserNav() {
             Settings
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-          Log out
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
