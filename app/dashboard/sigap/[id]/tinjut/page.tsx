@@ -19,6 +19,14 @@ import { Textarea } from "@/components/ui/textarea"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
+interface Report {
+    JenisLayanan?: string
+    KlasifikasiLaporan?: string
+    koreksi?: string
+    analisis_penyebab?: string
+    tindakan_korektif?: string
+}
+
 export default function TinjutPage() {
     const params = useParams()
     const searchParams = useSearchParams()
@@ -27,7 +35,7 @@ export default function TinjutPage() {
     const category = searchParams.get("category")
 
     const [loading, setLoading] = useState(false)
-    const [report, setReport] = useState<any>(null)
+    const [report, setReport] = useState<Report | null>(null)
     const [koreksi, setKoreksi] = useState("")
     const [analisisPenyebab, setAnalisisPenyebab] = useState("")
     const [tindakanKorektif, setTindakanKorektif] = useState("")

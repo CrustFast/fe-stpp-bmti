@@ -19,6 +19,13 @@ import { Textarea } from "@/components/ui/textarea"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
+interface Report {
+  JenisLayanan?: string
+  KlasifikasiLaporan?: string
+  tinjauan?: string
+  kesimpulan?: string
+}
+
 export default function RekapPage() {
   const params = useParams()
   const searchParams = useSearchParams()
@@ -27,7 +34,7 @@ export default function RekapPage() {
   const category = searchParams.get("category")
 
   const [loading, setLoading] = useState(false)
-  const [report, setReport] = useState<any>(null)
+  const [report, setReport] = useState<Report | null>(null)
   const [tinjauan, setTinjauan] = useState("")
   const [kesimpulan, setKesimpulan] = useState("")
 
