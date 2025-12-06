@@ -34,8 +34,8 @@ export default function DashboardPage() {
     const controller = new AbortController()
     const signal = controller.signal
 
-    const fetchData = async () => {
-      setLoading(true)
+    const fetchData = async (showLoading = true) => {
+      if (showLoading) setLoading(true)
       try {
         const mapPeriod = (p: string) => {
           if (p === "q1") return "triwulan_1"
@@ -75,9 +75,9 @@ export default function DashboardPage() {
       }
     }
 
-    fetchData()
+    fetchData(true)
 
-    const interval = setInterval(fetchData, 30000)
+    const interval = setInterval(() => fetchData(false), 30000)
 
     return () => {
       controller.abort()

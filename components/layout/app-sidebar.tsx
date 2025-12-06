@@ -7,7 +7,9 @@ import {
   PieChart,
   CircleHelp,
   ChevronRight,
+  LogOut,
 } from "lucide-react"
+import { signOut } from "next-auth/react"
 import Image from "next/image"
 import {
   Collapsible,
@@ -144,11 +146,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <a href="#">
-                <CircleHelp className="text-blue-500" />
-                <span>Bantuan</span>
-              </a>
+            <SidebarMenuButton
+              onClick={() => {
+                localStorage.clear()
+                signOut({ callbackUrl: "/" })
+              }}
+              className="cursor-pointer text-red-500 hover:text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="text-red-500" />
+              <span>Log out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ChevronRight, Download, X } from "lucide-react"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import NProgress from "nprogress"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -143,25 +144,30 @@ export default function EditReportPage() {
     }
   }, [id, category])
 
+
+
   const handleSave = async () => {
     setSaving(true)
+    NProgress.start()
     try {
       const apiType = getApiType(category)
       const endpoint = `${API_URL}/api/v1/${apiType}/${id}`
 
+      // Auto-update status to 'proses'
       const res = await fetch(endpoint, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: "proses" }),
       })
 
       if (!res.ok) throw new Error("Failed to update status")
 
-      toast.success("Status laporan berhasil diperbarui")
-      router.push("/dashboard")
-      router.refresh()
+      toast.success("Status diperbarui ke Proses. Silahkan isi tindak lanjut.")
+
+      // Redirect to Tinjut page
+      router.push(`/dashboard/sigap/${id}/tinjut?category=${category}`)
     } catch (error) {
       console.error("Error updating status:", error)
       toast.error("Gagal memperbarui status")
@@ -255,23 +261,13 @@ export default function EditReportPage() {
                 <Input value={report.KodePengaduan} readOnly className="col-span-3 bg-muted/50" />
               </div>
 
-              {/* Status*/}
-              <div className="grid grid-cols-4 items-center gap-4">
+              {/* Status Hidden - Auto updated to 'proses' on Tinjau */}
+              {/* <div className="grid grid-cols-4 items-center gap-4">
                 <Label>Status</Label>
                 <div className="col-span-3">
-                  <Select value={status} onValueChange={setStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="baru">Baru</SelectItem>
-                      <SelectItem value="proses">Proses</SelectItem>
-                      <SelectItem value="selesai">Selesai</SelectItem>
-                      <SelectItem value="ditolak">Ditolak</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Input value={status} readOnly className="bg-muted/50" />
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* --- PENGADUAN SECTION --- */}

@@ -92,6 +92,15 @@ function PieChartWithCustomizedLabel({ data, isAnimationActive = true }: { data:
 }
 
 export function DashboardCharts({ data, loading }: DashboardChartsProps) {
+  const [isAnimationActive, setIsAnimationActive] = React.useState(true)
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsAnimationActive(false)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [])
+
   if (loading || !data) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -152,7 +161,7 @@ export function DashboardCharts({ data, loading }: DashboardChartsProps) {
                 cursor={false}
                 content={<ChartTooltipContent indicator="line" />}
               />
-              <Bar dataKey="jumlah" fill="var(--color-jumlah)" radius={4}>
+              <Bar dataKey="jumlah" fill="var(--color-jumlah)" radius={4} isAnimationActive={isAnimationActive}>
                 <LabelList
                   dataKey="jumlah"
                   position="right"
@@ -171,7 +180,7 @@ export function DashboardCharts({ data, loading }: DashboardChartsProps) {
           <CardDescription>Berdasarkan Pengaduan, Permintaan Informasi dan Saran</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col justify-center items-center pb-0">
-          <PieChartWithCustomizedLabel data={data.distribution} />
+          <PieChartWithCustomizedLabel data={data.distribution} isAnimationActive={isAnimationActive} />
           <div className="mt-4 grid grid-cols-2 gap-4 w-full">
             {data.distribution.map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
