@@ -16,7 +16,7 @@ const Navbar: React.FC = () => {
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const blueZoneIds = ['kanalAduan', 'benturanKepentinganForm'];
+    const blueZoneIds = ['kanalAduan', 'benturanKepentinganForm', 'timeline'];
 
     const handleScroll = () => {
       const scrollTop = window.scrollY;
@@ -48,8 +48,8 @@ const Navbar: React.FC = () => {
       backgroundColor: isInBlueZone
         ? '#0369a1'
         : isScrolled
-        ? 'rgba(255, 255, 255, 0.05)'
-        : 'transparent',
+          ? 'rgba(255, 255, 255, 0.05)'
+          : 'transparent',
       backdropFilter: isInBlueZone || isScrolled ? 'blur(12px)' : 'none',
       borderBottom: isInBlueZone || isScrolled
         ? '1px solid rgba(255, 255, 255, 0.25)'
@@ -178,16 +178,14 @@ const Navbar: React.FC = () => {
             <span className="relative w-6 h-6">
               <span className="absolute inset-0 flex items-center justify-center">
                 <Menu
-                  className={`h-6 w-6 transition-all duration-300 ${
-                    isMobileOpen ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
-                  }`}
+                  className={`h-6 w-6 transition-all duration-300 ${isMobileOpen ? 'opacity-0 scale-50 rotate-90' : 'opacity-100 scale-100 rotate-0'
+                    }`}
                 />
               </span>
               <span className="absolute inset-0 flex items-center justify-center">
                 <X
-                  className={`h-6 w-6 transition-all duration-300 ${
-                    isMobileOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
-                  }`}
+                  className={`h-6 w-6 transition-all duration-300 ${isMobileOpen ? 'opacity-100 scale-100 rotate-0' : 'opacity-0 scale-50 -rotate-90'
+                    }`}
                 />
               </span>
             </span>
