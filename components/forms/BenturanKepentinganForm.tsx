@@ -70,7 +70,7 @@ type JenisBenturan = {
 };
 
 type ApiResponse<T> = {
-  success: boolean;
+  status: string;
   message: string;
   data: T;
 };
@@ -108,15 +108,15 @@ export function BenturanKepentinganForm() {
       try {
         setIsLoadingOptions(true);
         // Fetch Unit Kerja
-        const resUnit = await fetch('http://localhost:8080/api/ref/program-keahlian');
+        const resUnit = await fetch('/api/ref/program-keahlian');
         const jsonUnit: ApiResponse<UnitKerja[]> = await resUnit.json();
 
         // Fetch Jenis Benturan
-        const resJenis = await fetch('http://localhost:8080/api/ref/jenis-benturan');
+        const resJenis = await fetch('/api/ref/jenis-benturan');
         const jsonJenis: ApiResponse<JenisBenturan[]> = await resJenis.json();
 
-        if (jsonUnit.success) setUnitKerjaOptions(jsonUnit.data);
-        if (jsonJenis.success) setJenisBenturanOptions(jsonJenis.data);
+        if (jsonUnit.status === 'success') setUnitKerjaOptions(jsonUnit.data);
+        if (jsonJenis.status === 'success') setJenisBenturanOptions(jsonJenis.data);
       } catch (error) {
         console.error("Failed to fetch options:", error);
         toast.error("Gagal memuat data referensi (Unit Kerja / Jenis Benturan).");

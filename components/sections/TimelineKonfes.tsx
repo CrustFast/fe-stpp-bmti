@@ -37,7 +37,7 @@ export function TimelineKonfes() {
               Jika Anda ingin melapor secara langsung, silakan unduh formulir resmi laporan benturan kepentingan. Dokumen ini membantu memastikan seluruh aspek situasi dapat dicatat secara lengkap.
             </p>
             <a
-              href="/storage/Formulir Pengaduan Gratifikasi.docx"
+              href="/storage/Form Laporan Benturan Kepentingan.docx"
               download
               className="mt-3 inline-flex items-center px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-blue-700 focus:z-10 focus:ring-4 focus:outline-none focus:ring-blue-100 transition-all"
             >

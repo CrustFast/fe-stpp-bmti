@@ -25,14 +25,39 @@ async function test(params) {
 }
 
 async function run() {
-    console.log("--- Test 1: Basic Fetch ---");
-    await test({ page: "1", limit: "10" });
+    console.log("--- Test 1: Fetch Program Keahlian ---");
+    const url1 = `${API_URL}/api/ref/program-keahlian`;
+    console.log(`Fetching: ${url1}`);
+    try {
+        const res = await fetch(url1);
+        console.log(`Status: ${res.status} ${res.statusText}`);
+        if (!res.ok) {
+            const text = await res.text();
+            console.log(`Error Body: ${text.substring(0, 200)}...`);
+        } else {
+            const json = await res.json();
+            console.log("Success. Data:", JSON.stringify(json, null, 2).substring(0, 200) + "...");
+        }
+    } catch (e) {
+        console.log(`Exception: ${e.message}`);
+    }
 
-    console.log("--- Test 2: Filter Year 2025 ---");
-    await test({ year: "2025", page: "1", limit: "10" });
-
-    console.log("--- Test 3: Filter Category Pengaduan ---");
-    await test({ category: "pengaduan", page: "1", limit: "10" });
+    console.log("\n--- Test 2: Fetch Jenis Benturan ---");
+    const url2 = `${API_URL}/api/ref/jenis-benturan`;
+    console.log(`Fetching: ${url2}`);
+    try {
+        const res = await fetch(url2);
+        console.log(`Status: ${res.status} ${res.statusText}`);
+        if (!res.ok) {
+            const text = await res.text();
+            console.log(`Error Body: ${text.substring(0, 200)}...`);
+        } else {
+            const json = await res.json();
+            console.log("Success. Data:", JSON.stringify(json, null, 2).substring(0, 200) + "...");
+        }
+    } catch (e) {
+        console.log(`Exception: ${e.message}`);
+    }
 }
 
 run();
