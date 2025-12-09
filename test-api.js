@@ -1,7 +1,8 @@
 
 const API_URL = "http://localhost:8080";
 
-async function test(params) {
+// eslint-disable-next-line no-unused-vars
+async function _test(params) {
     const query = new URLSearchParams(params).toString();
     const url = `${API_URL}/api/v1/dumas?${query}`;
     console.log(`\nFetching: ${url}`);

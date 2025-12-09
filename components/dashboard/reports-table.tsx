@@ -34,7 +34,7 @@ import { Search, Download, Gift, Users, FileText, FileSpreadsheet, ChevronDown, 
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { useRouter } from "next/navigation"
-import { generatePDF } from "@/lib/pdf-export"
+import { ReportData } from "@/lib/pdf-export"
 import { toast } from "sonner"
 import { ExportModal } from "./export-modal"
 
@@ -71,7 +71,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
   const [search, setSearch] = React.useState("")
   const [exporting, setExporting] = React.useState(false)
   const [showExportModal, setShowExportModal] = React.useState(false)
-  const [reportData, setReportData] = React.useState<any>(null)
+  const [reportData, setReportData] = React.useState<ReportData | null>(null)
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search)
 
@@ -154,7 +154,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
             setReports(json.data?.data || [])
             setPagination(paginationData)
           }
-        } catch (e) {
+        } catch (_) {
           console.error("Failed to parse reports JSON:", text)
           if (!signal.aborted) setReports([])
         }

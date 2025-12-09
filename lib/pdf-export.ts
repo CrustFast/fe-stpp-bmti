@@ -185,7 +185,7 @@ export const generatePDF = async (data: ReportData, type: ReportType = "5.3b", o
       return found?.jumlah || 0
     }
 
-    const saluranRows: (string | number | { content: string; colSpan: number; styles: { fontStyle: string; halign: string } })[][] = []
+    const saluranRows: (string | number | { content: string; colSpan: number; styles: { fontStyle: "bold" | "normal" | "italic"; halign: "left" | "center" | "right" } })[][] = []
 
     saluranRows.push([{ content: "PENGADUAN BIDANG PENGAWASAN", colSpan: 3, styles: { fontStyle: "bold", halign: "left" } }])
     group1.forEach((item) => {
@@ -203,7 +203,7 @@ export const generatePDF = async (data: ReportData, type: ReportType = "5.3b", o
     autoTable(doc, {
       startY: currentY,
       head: [["Kode", "Nama Saluran", "Jumlah"]],
-      body: saluranRows as any,
+      body: saluranRows,
       theme: "grid",
       styles: {
         font: "times",
