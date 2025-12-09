@@ -2,7 +2,7 @@ import {
   Card,
   CardContent,
 } from "@/components/ui/card"
-import { useEffect, useState } from "react"
+
 import { FileText, MessageSquare, CheckCircle, Clock } from "lucide-react"
 
 export interface StatItem {
