@@ -40,6 +40,7 @@ async function refreshAccessToken(token: JWT) {
     }
   }
 }
+console.log("Loading NextAuth configuration...");
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Credentials({
@@ -90,6 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   pages: {
     signIn: '/login',
+    error: '/auth/error',
   },
   callbacks: {
     async jwt({ token, user }) {

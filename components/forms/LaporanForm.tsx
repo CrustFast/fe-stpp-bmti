@@ -52,6 +52,7 @@ const formSchema = z.object({
   periode_diklat_mulai: z.date().optional(),
   periode_diklat_akhir: z.date().optional(),
   nama_diklat: z.string().optional(),
+  nip: z.string().optional(),
   nama_peserta_diklat: z.string().optional(),
   nomor_telepon_peserta_diklat: z.string().optional(),
   asal_smk_peserta_diklat: z.string().optional(),
@@ -81,6 +82,7 @@ const formSchema = z.object({
 
   // Permintaan Informasi
   nama_peminta_informasi: z.string().optional(),
+  pekerjaan_peminta_informasi: z.string().optional(),
   nomor_telepon_peminta_informasi: z.string().optional(),
   email_peminta_informasi: z.string().email().optional().or(z.literal('')),
   isi_laporan_permintaan_informasi: z.string().optional(),
@@ -182,6 +184,7 @@ export function LaporanForm() {
       periode_diklat_mulai: undefined,
       periode_diklat_akhir: undefined,
       nama_diklat: '',
+      nip: '',
       nama_peserta_diklat: '',
       nomor_telepon_peserta_diklat: '',
       asal_smk_peserta_diklat: '',
@@ -211,6 +214,7 @@ export function LaporanForm() {
 
       // Permintaan informasi
       nama_peminta_informasi: '',
+      pekerjaan_peminta_informasi: '',
       nomor_telepon_peminta_informasi: '',
       email_peminta_informasi: '',
       isi_laporan_permintaan_informasi: '',
@@ -340,6 +344,7 @@ export function LaporanForm() {
         periode_diklat_mulai: toDateStr(values.periode_diklat_mulai),
         periode_diklat_akhir: toDateStr(values.periode_diklat_akhir),
         nama_diklat: values.nama_diklat,
+        nip: values.nip,
         nama_peserta_diklat: values.nama_peserta_diklat,
         nomor_telepon_peserta_diklat: values.nomor_telepon_peserta_diklat,
         asal_smk_peserta_diklat: values.asal_smk_peserta_diklat,
@@ -361,6 +366,7 @@ export function LaporanForm() {
         email_masyarakat_umum: values.email_masyarakat_umum,
         alamat_masyarakat_umum: values.alamat_masyarakat_umum,
         nama_peminta_informasi: values.nama_peminta_informasi,
+        pekerjaan_peminta_informasi: values.pekerjaan_peminta_informasi,
         nomor_telepon_peminta_informasi: values.nomor_telepon_peminta_informasi,
         email_peminta_informasi: values.email_peminta_informasi,
         isi_laporan_permintaan_informasi: values.isi_laporan_permintaan_informasi,
@@ -589,6 +595,7 @@ export function LaporanForm() {
                       className="mt-6"
                     />
                     <FormField control={form.control} name="nama_diklat" render={({ field }) => <InputField label="Nama Diklat" className="sm:col-span-2 mt-6" {...field} />} />
+                    <FormField control={form.control} name="nip" render={({ field }) => <InputField label="Nomor Induk Pegawai (NIP)" className="sm:col-span-2 mt-6" {...field} />} />
                     <FormField control={form.control} name="nama_peserta_diklat" render={({ field }) => <InputField label="Nama Peserta" className="sm:col-span-2 mt-6" {...field} />} />
                     <FormField control={form.control} name="nomor_telepon_peserta_diklat" render={({ field }) => <InputField label="Nomor Telepon Peserta Diklat" className="sm:col-span-2 mt-6" {...field} />} />
                     <FormField control={form.control} name="asal_smk_peserta_diklat" render={({ field }) => <InputField label="Asal SMK" className="sm:col-span-2 mt-6" {...field} />} />
@@ -702,6 +709,7 @@ export function LaporanForm() {
                 </div>
 
                 <FormField control={form.control} name="nama_peminta_informasi" render={({ field }) => <InputField label="Nama" className="sm:col-span-2" {...field} />} />
+                <FormField control={form.control} name="pekerjaan_peminta_informasi" render={({ field }) => <InputField label="Pekerjaan" className="sm:col-span-2" {...field} />} />
                 <FormField control={form.control} name="nomor_telepon_peminta_informasi" render={({ field }) => <InputField label="Nomor Telepon" className="sm:col-span-2" {...field} />} />
                 <FormField control={form.control} name="email_peminta_informasi" render={({ field }) => <InputField label="Email" type="email" className="sm:col-span-2" {...field} />} />
                 <FormField
@@ -831,6 +839,7 @@ function InputField({ label, className, readOnly, type, placeholder, value, onCh
 interface SelectOption {
   value: string;
   label: string;
+  // ...
 }
 
 interface SelectFieldProps extends Omit<ControllerRenderProps<FieldValues, string>, 'ref'> {

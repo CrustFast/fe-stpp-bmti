@@ -36,6 +36,7 @@ import { id } from "date-fns/locale"
 import { useRouter } from "next/navigation"
 import { generatePDF } from "@/lib/pdf-export"
 import { toast } from "sonner"
+import { ExportModal } from "./export-modal"
 
 interface ReportsTableProps {
   year: string
@@ -69,6 +70,8 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
   const [page, setPage] = React.useState(1)
   const [search, setSearch] = React.useState("")
   const [exporting, setExporting] = React.useState(false)
+  const [showExportModal, setShowExportModal] = React.useState(false)
+  const [reportData, setReportData] = React.useState<any>(null)
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search)
 
@@ -205,9 +208,10 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
       const res = await fetch(`${API_URL}/api/v1/dumas/rekap?${queryParams}`)
       if (!res.ok) throw new Error("Failed to fetch report data")
       const json = await res.json()
+      console.log("PDF Export Data:", json.data)
 
-      generatePDF(json.data)
-      toast.success("Berhasil mengunduh laporan PDF")
+      setReportData(json.data)
+      setShowExportModal(true)
     } catch (error) {
       console.error("Error exporting PDF:", error)
       toast.error("Gagal mengunduh laporan PDF")
@@ -429,6 +433,15 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
           )}
         </CardContent>
       </Card>
+      {reportData && (
+        <ExportModal
+          open={showExportModal}
+          onOpenChange={setShowExportModal}
+          data={reportData}
+          year={year}
+          period={period}
+        />
+      )}
     </Tabs>
   )
 }
