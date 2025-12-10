@@ -91,7 +91,7 @@ export function FilePondUploader<T extends FieldValues>({
           },
         }}
         onupdatefiles={(fileItems) => handleUpdateFiles(fileItems)}
-        onprocessfile={(error, _file) => {
+        onprocessfile={(error) => {
           if (!error && pond.current) {
             handleUpdateFiles(pond.current.getFiles());
           }

@@ -249,7 +249,7 @@ export const generate53b = (doc: jsPDF, data: ReportData, options: { year: strin
     "GRA", "BKP", "WBS", "TDB1", "TDB2", "TDB3"
   ]
 
-  const matrixBody: any[] = []
+  const matrixBody: (string | number | { content: string; colSpan: number; styles: { fontStyle: "bold" | "normal" | "italic"; halign: "left" | "center" | "right" } })[][] = []
 
   data.pengaduan_masyarakat.forEach(group => {
     matrixBody.push([{ content: group.group, colSpan: 18, styles: { fontStyle: 'bold', halign: 'left' } }])
