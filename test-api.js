@@ -1,29 +1,7 @@
 
 const API_URL = "http://localhost:8080";
 
-// eslint-disable-next-line no-unused-vars
-async function _test(params) {
-    const query = new URLSearchParams(params).toString();
-    const url = `${API_URL}/api/v1/dumas?${query}`;
-    console.log(`\nFetching: ${url}`);
-    try {
-        const res = await fetch(url);
-        console.log(`Status: ${res.status} ${res.statusText}`);
-        if (!res.ok) {
-            const text = await res.text();
-            console.log(`Error Body: ${text}`);
-            return;
-        }
-        const json = await res.json();
-        const reports = json.data?.data || [];
-        console.log(`Success. Reports count: ${reports.length}`);
-        if (reports.length > 0) {
-            console.log("Sample report:", JSON.stringify(reports[0], null, 2));
-        }
-    } catch (e) {
-        console.log(`Exception: ${e.message}`);
-    }
-}
+
 
 async function run() {
     console.log("--- Test 1: Fetch Program Keahlian ---");
