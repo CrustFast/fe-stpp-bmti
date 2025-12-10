@@ -41,6 +41,7 @@ interface ReportDetail {
   PeriodeDiklatMulai?: string
   PeriodeDiklatAkhir?: string
   NamaDiklat?: string
+  NIP?: string
   NamaPesertaDiklat?: string
   NomorTeleponPesertaDiklat?: string
   AsalSmkPesertaDiklat?: string
@@ -66,6 +67,7 @@ interface ReportDetail {
   EmailMasyarakatUmum?: string
   AlamatMasyarakatUmum?: string
   NamaPemintaInformasi?: string
+  PekerjaanPemintaInformasi?: string
   NomorTeleponPemintaInformasi?: string
   EmailPemintaInformasi?: string
   NamaAduanInformasi?: string
@@ -305,6 +307,10 @@ export default function EditReportPage() {
                         <Input value={report.NamaDiklat || "-"} readOnly className="col-span-3 bg-muted/50" />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label>NIP</Label>
+                        <Input value={report.NIP || "-"} readOnly className="col-span-3 bg-muted/50" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label>Nama Peserta</Label>
                         <Input value={report.NamaPesertaDiklat || "-"} readOnly className="col-span-3 bg-muted/50" />
                       </div>
@@ -447,6 +453,10 @@ export default function EditReportPage() {
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label>Nama Peminta</Label>
                     <Input value={report.NamaPemintaInformasi || "-"} readOnly className="col-span-3 bg-muted/50" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label>Pekerjaan</Label>
+                    <Input value={report.PekerjaanPemintaInformasi || "-"} readOnly className="col-span-3 bg-muted/50" />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label>No. Telepon</Label>

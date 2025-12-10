@@ -13,6 +13,12 @@ export interface StatItem {
 
 export interface DashboardData {
   stats: StatItem[]
+  charts?: {
+    distribution: {
+      name: string
+      value: number
+    }[]
+  }
 }
 
 interface StatsCardsProps {
@@ -42,13 +48,13 @@ export function StatsCards({ data, loading }: StatsCardsProps) {
   }
 
   // Jumlah total
-  const totalPengaduan = data.stats.find(s => s.name === "Pengaduan")
-    ? (data.stats.find(s => s.name === "Pengaduan")!.pending + data.stats.find(s => s.name === "Pengaduan")!.resolved)
-    : 0
+  const totalPengaduan = data.charts?.distribution?.find(d => d.name === "Pengaduan")?.value
+    ?? data.stats.find(s => s.name === "Pengaduan")?.pending
+    ?? 0
 
-  const totalInfo = data.stats.find(s => s.name === "Permintaan Informasi")
-    ? (data.stats.find(s => s.name === "Permintaan Informasi")!.pending + data.stats.find(s => s.name === "Permintaan Informasi")!.resolved)
-    : 0
+  const totalInfo = data.charts?.distribution?.find(d => d.name === "Permintaan Informasi")?.value
+    ?? data.stats.find(s => s.name === "Permintaan Informasi")?.pending
+    ?? 0
 
   const totalResolved = data.stats.reduce((acc, curr) => acc + curr.resolved, 0)
   const totalPending = data.stats.reduce((acc, curr) => acc + curr.pending, 0)

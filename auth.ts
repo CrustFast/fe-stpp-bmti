@@ -6,6 +6,7 @@ import { type JWT } from "next-auth/jwt"
 const API_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 async function refreshAccessToken(token: JWT) {
   try {
+    console.log("Refreshing access token...");
     if (!token.refreshToken) {
       console.error("RefreshAccessTokenError: Missing refresh token");
       throw new Error("Missing refresh token");
@@ -96,6 +97,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        console.log("JWT Callback: Initial login", {
+          expires_in: user.expires_in,
+          computed_expiresAt: Date.now() + (user.expires_in * 1000)
+        });
         return {
           accessToken: user.access_token,
           refreshToken: user.refresh_token,
@@ -107,9 +112,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         }
       }
+
+      console.log("JWT Callback: Checking expiration", {
+        now: Date.now(),
+        expiresAt: token.expiresAt,
+        isValid: Date.now() < token.expiresAt
+      });
+
       if (Date.now() < token.expiresAt) {
         return token
       }
+      console.log("JWT Callback: Token expired, refreshing...");
       return refreshAccessToken(token)
     },
     async session({ session, token }) {
