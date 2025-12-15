@@ -86,7 +86,7 @@ export default function TinjutPage() {
             const apiType = getApiType(category)
             const endpoint = `${API_URL}/api/v1/${apiType}/${id}`
 
-            let payload: any = {}
+            let payload: Record<string, string> = {}
 
             if (category === "permintaan-informasi") {
                 payload = {

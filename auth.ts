@@ -20,7 +20,7 @@ async function refreshAccessToken(token: JWT) {
     let refreshedTokens
     try {
       refreshedTokens = JSON.parse(text)
-    } catch (e) {
+    } catch {
       console.error("RefreshAccessTokenError: Invalid JSON response", text)
       throw new Error("Invalid JSON response from refresh token endpoint")
     }
@@ -66,7 +66,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             let user;
             try {
               user = JSON.parse(text);
-            } catch (e) {
+            } catch {
               console.error("LoginError: Invalid JSON response", text);
               return null;
             }

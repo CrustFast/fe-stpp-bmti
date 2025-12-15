@@ -1,6 +1,6 @@
 import jsPDF from "jspdf"
 import { ReportData, ReportType } from "./pdf/types"
-import { loadImage, getPeriodLabel } from "./pdf/utils"
+import { loadImage } from "./pdf/utils"
 import { generate53b } from "./pdf/generate-53b"
 import { generate53c } from "./pdf/generate-53c"
 import { generate53d } from "./pdf/generate-53d"

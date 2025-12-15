@@ -5,7 +5,7 @@ import {
   Activity,
   FileText,
   PieChart,
-  CircleHelp,
+
   ChevronRight,
   LogOut,
 } from "lucide-react"

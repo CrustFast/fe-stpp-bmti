@@ -57,7 +57,7 @@ export async function submitLaporanBenturan(formData: FormData) {
 }
 
 export async function submitLaporanDumas(formData: FormData) {
-  const klasifikasi = formData.get('klasifikasi_laporan');
+
 
   const endpointPath = "/api/laporan/dumas";
   // if (klasifikasi === 'permintaan-informasi' || klasifikasi === 'permintaan_informasi') {
