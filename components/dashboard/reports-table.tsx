@@ -154,7 +154,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
             setReports(json.data?.data || [])
             setPagination(paginationData)
           }
-        } catch (_) {
+        } catch {
           console.error("Failed to parse reports JSON:", text)
           if (!signal.aborted) setReports([])
         }
@@ -440,6 +440,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
           data={reportData}
           year={year}
           period={period}
+          category={category}
         />
       )}
     </Tabs>

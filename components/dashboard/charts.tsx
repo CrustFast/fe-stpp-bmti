@@ -40,7 +40,7 @@ interface DashboardChartsProps {
   loading: boolean
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+
 
 const chartConfig = {
   jumlah: {
@@ -92,14 +92,17 @@ function PieChartWithCustomizedLabel({ data, isAnimationActive = true }: { data:
 }
 
 export function DashboardCharts({ data, loading }: DashboardChartsProps) {
-  const [isAnimationActive, setIsAnimationActive] = React.useState(true)
+  const [isAnimationActive, setIsAnimationActive] = React.useState(false)
 
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsAnimationActive(false)
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [])
+    if (!loading && data) {
+      setIsAnimationActive(true)
+      const timer = setTimeout(() => {
+        setIsAnimationActive(false)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, data])
 
   if (loading || !data) {
     return (
@@ -136,6 +139,7 @@ export function DashboardCharts({ data, loading }: DashboardChartsProps) {
         <CardContent>
           <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
             <BarChart
+              key={JSON.stringify(data.categories)}
               accessibilityLayer
               data={data.categories}
               layout="vertical"
@@ -180,7 +184,11 @@ export function DashboardCharts({ data, loading }: DashboardChartsProps) {
           <CardDescription>Berdasarkan Pengaduan, Permintaan Informasi dan Saran</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col justify-center items-center pb-0">
-          <PieChartWithCustomizedLabel data={data.distribution} isAnimationActive={isAnimationActive} />
+          <PieChartWithCustomizedLabel
+            key={JSON.stringify(data.distribution)}
+            data={data.distribution}
+            isAnimationActive={isAnimationActive}
+          />
           <div className="mt-4 grid grid-cols-2 gap-4 w-full">
             {data.distribution.map((item, index) => (
               <div key={index} className="flex items-center space-x-2">
