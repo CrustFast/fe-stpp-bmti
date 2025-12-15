@@ -29,12 +29,21 @@ interface ExportModalProps {
   data: ReportData
   year: string
   period: string
+  category: string
 }
 
-export function ExportModal({ open, onOpenChange, data, year, period }: ExportModalProps) {
+export function ExportModal({ open, onOpenChange, data, year, period, category }: ExportModalProps) {
   const [reportType, setReportType] = React.useState<ReportType | "all">("5.3b")
   const [loading, setLoading] = React.useState(false)
   const contentRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (category === "benturan") {
+      setReportType("5.5c")
+    } else {
+      setReportType("5.3b")
+    }
+  }, [category])
 
   useGSAP(() => {
     if (open && contentRef.current) {
@@ -87,14 +96,26 @@ export function ExportModal({ open, onOpenChange, data, year, period }: ExportMo
               Jenis Laporan
             </Label>
             <Select value={reportType} onValueChange={(val) => setReportType(val as ReportType | "all")}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Pilih jenis laporan" />
+              <SelectTrigger className="col-span-3 w-full">
+                <span className="truncate block w-full text-left">
+                  <SelectValue placeholder="Pilih jenis laporan" />
+                </span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Laporan</SelectItem>
-                <SelectItem value="5.3b">5.3b Laporan Pengaduan Masyarakat</SelectItem>
-                <SelectItem value="5.3c">5.3c Laporan Monev</SelectItem>
-                <SelectItem value="5.3d">5.3d Laporan Tinjut</SelectItem>
+                {category === "benturan" ? (
+                  <>
+                    <SelectItem value="5.5c">5.5c Laporan Benturan Kepentingan</SelectItem>
+                    <SelectItem value="5.5d">5.5d Laporan Monev Benturan Kepentingan</SelectItem>
+                    <SelectItem value="5.5e">5.5e Laporan Tinjut Benturan Kepentingan</SelectItem>
+                  </>
+                ) : (
+                  <>
+                    <SelectItem value="all">Semua Laporan</SelectItem>
+                    <SelectItem value="5.3b">5.3b Laporan Pengaduan Masyarakat</SelectItem>
+                    <SelectItem value="5.3c">5.3c Laporan Monev</SelectItem>
+                    <SelectItem value="5.3d">5.3d Laporan Tinjut</SelectItem>
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>

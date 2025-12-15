@@ -25,6 +25,7 @@ interface Report {
     koreksi?: string
     analisis_penyebab?: string
     tindakan_korektif?: string
+    tanggapan?: string
 }
 
 export default function TinjutPage() {
@@ -39,6 +40,7 @@ export default function TinjutPage() {
     const [koreksi, setKoreksi] = useState("")
     const [analisisPenyebab, setAnalisisPenyebab] = useState("")
     const [tindakanKorektif, setTindakanKorektif] = useState("")
+    const [tanggapan, setTanggapan] = useState("")
 
     const getApiType = (cat: string | null) => {
         switch (cat) {
@@ -66,6 +68,7 @@ export default function TinjutPage() {
                     setKoreksi(json.data.koreksi || "")
                     setAnalisisPenyebab(json.data.analisis_penyebab || "")
                     setTindakanKorektif(json.data.tindakan_korektif || "")
+                    setTanggapan(json.data.tanggapan || "")
                 }
             } catch (error) {
                 console.error("Error fetching report:", error)
@@ -83,11 +86,20 @@ export default function TinjutPage() {
             const apiType = getApiType(category)
             const endpoint = `${API_URL}/api/v1/${apiType}/${id}`
 
-            const payload = {
-                koreksi,
-                analisis_penyebab: analisisPenyebab,
-                tindakan_korektif: tindakanKorektif,
-                status: "proses"
+            let payload: any = {}
+
+            if (category === "permintaan-informasi") {
+                payload = {
+                    tanggapan,
+                    status: "selesai"
+                }
+            } else {
+                payload = {
+                    koreksi,
+                    analisis_penyebab: analisisPenyebab,
+                    tindakan_korektif: tindakanKorektif,
+                    status: "proses"
+                }
             }
 
             const res = await fetch(endpoint, {
@@ -98,8 +110,13 @@ export default function TinjutPage() {
 
             if (!res.ok) throw new Error("Failed to save tindak lanjut")
 
-            toast.success("Tindak lanjut disimpan. Lanjut ke Rekapitulasi.")
-            router.push(`/dashboard/sigap/${id}/rekap?category=${category}`)
+            if (category === "permintaan-informasi") {
+                toast.success("Tanggapan disimpan. Laporan selesai.")
+                router.push("/dashboard")
+            } else {
+                toast.success("Tindak lanjut disimpan. Lanjut ke Rekapitulasi.")
+                router.push(`/dashboard/sigap/${id}/rekap?category=${category}`)
+            }
         } catch (error) {
             console.error("Error saving tinjut:", error)
             toast.error("Gagal menyimpan tindak lanjut")
@@ -129,49 +146,66 @@ export default function TinjutPage() {
                 <CardHeader>
                     <CardTitle>Tindak Lanjut Laporan</CardTitle>
                     <CardDescription>
-                        Silahkan isi form tindak lanjut berikut ini.
+                        {category === "permintaan-informasi"
+                            ? "Silahkan isi tanggapan untuk permintaan informasi ini."
+                            : "Silahkan isi form tindak lanjut berikut ini."}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                        <div className="grid gap-2">
-                            <Label htmlFor="koreksi">Koreksi</Label>
-                            <Textarea
-                                id="koreksi"
-                                placeholder="Masukkan koreksi..."
-                                value={koreksi}
-                                onChange={(e) => setKoreksi(e.target.value)}
-                                className="min-h-[100px]"
-                            />
+                    {category === "permintaan-informasi" ? (
+                        <div className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="tanggapan">Tanggapan</Label>
+                                <Textarea
+                                    id="tanggapan"
+                                    placeholder="Masukkan tanggapan..."
+                                    value={tanggapan}
+                                    onChange={(e) => setTanggapan(e.target.value)}
+                                    className="min-h-[150px]"
+                                />
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="analisis">Analisis Penyebab</Label>
-                            <Textarea
-                                id="analisis"
-                                placeholder="Masukkan analisis penyebab..."
-                                value={analisisPenyebab}
-                                onChange={(e) => setAnalisisPenyebab(e.target.value)}
-                                className="min-h-[100px]"
-                            />
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="koreksi">Koreksi</Label>
+                                <Textarea
+                                    id="koreksi"
+                                    placeholder="Masukkan koreksi..."
+                                    value={koreksi}
+                                    onChange={(e) => setKoreksi(e.target.value)}
+                                    className="min-h-[100px]"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="analisis">Analisis Penyebab</Label>
+                                <Textarea
+                                    id="analisis"
+                                    placeholder="Masukkan analisis penyebab..."
+                                    value={analisisPenyebab}
+                                    onChange={(e) => setAnalisisPenyebab(e.target.value)}
+                                    className="min-h-[100px]"
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="tindakan">Tindakan Korektif</Label>
+                                <Textarea
+                                    id="tindakan"
+                                    placeholder="Masukkan tindakan korektif..."
+                                    value={tindakanKorektif}
+                                    onChange={(e) => setTindakanKorektif(e.target.value)}
+                                    className="min-h-[100px]"
+                                />
+                            </div>
                         </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="tindakan">Tindakan Korektif</Label>
-                            <Textarea
-                                id="tindakan"
-                                placeholder="Masukkan tindakan korektif..."
-                                value={tindakanKorektif}
-                                onChange={(e) => setTindakanKorektif(e.target.value)}
-                                className="min-h-[100px]"
-                            />
-                        </div>
-                    </div>
+                    )}
 
                     <div className="flex justify-end space-x-2 pt-4">
                         <Button variant="outline" onClick={() => router.back()}>
                             Kembali
                         </Button>
                         <Button onClick={handleSave} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                            {loading ? "Menyimpan..." : "Simpan & Lanjut"}
+                            {loading ? "Menyimpan..." : (category === "permintaan-informasi" ? "Simpan & Selesai" : "Simpan & Lanjut")}
                         </Button>
                     </div>
                 </CardContent>

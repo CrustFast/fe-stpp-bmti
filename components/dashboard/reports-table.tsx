@@ -440,6 +440,7 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
           data={reportData}
           year={year}
           period={period}
+          category={category}
         />
       )}
     </Tabs>

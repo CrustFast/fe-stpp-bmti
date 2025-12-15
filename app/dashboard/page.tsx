@@ -109,9 +109,9 @@ export default function DashboardPage() {
               <SelectValue placeholder="Pilih Tahun" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2023">2023</SelectItem>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
+              {Array.from({ length: new Date().getFullYear() - 2021 + 1 }, (_, i) => 2021 + i).reverse().map((y) => (
+                <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
