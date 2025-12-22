@@ -21,7 +21,7 @@ registerPlugin(
 import { useController } from 'react-hook-form';
 import type { Control, FieldValues, Path } from 'react-hook-form';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8080';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
 
 interface UploaderProps<T extends FieldValues> {
   control: Control<T>;
