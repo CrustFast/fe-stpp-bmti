@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 const API_URL =
-  process.env.NODE_ENV === "production"
+  process.env.API_URL ||
+  (process.env.NODE_ENV === "production"
     ? "https://fe-stpp-bmti.vercel.app"
-    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080");
 
 export async function submitLaporanGratifikasi(formData: FormData) {
   const endpointPath = "/api/laporan/gratifikasi";

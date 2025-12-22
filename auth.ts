@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials"
 import { z } from "zod"
 import { type JWT } from "next-auth/jwt"
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080";
 async function refreshAccessToken(token: JWT) {
   try {
     console.log("Refreshing access token...");
