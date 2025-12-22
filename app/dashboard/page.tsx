@@ -51,6 +51,10 @@ export default function DashboardPage() {
           fetch(`${API_URL}/api/v1/dumas/stats/categories?year=${year}&period=${mappedPeriod}`, { signal })
         ])
 
+        if (summaryRes.status === 429 || categoriesRes.status === 429) {
+          throw new Error("Too Many Requests")
+        }
+
         if (!summaryRes.ok) throw new Error(`Failed to fetch summary: ${summaryRes.status}`)
         if (!categoriesRes.ok) throw new Error(`Failed to fetch categories: ${categoriesRes.status}`)
 
@@ -75,12 +79,16 @@ export default function DashboardPage() {
       }
     }
 
-    fetchData(true)
+    // Debounce fetch
+    const timeoutId = setTimeout(() => {
+      fetchData(true)
+    }, 500)
 
     const interval = setInterval(() => fetchData(false), 30000)
 
     return () => {
       controller.abort()
+      clearTimeout(timeoutId)
       clearInterval(interval)
     }
   }, [year, period])

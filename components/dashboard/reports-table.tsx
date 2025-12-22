@@ -128,6 +128,11 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
 
         const res = await fetch(fullUrl, { signal })
 
+        if (res.status === 429) {
+          toast.error("Terlalu banyak permintaan. Mohon tunggu sebentar.")
+          throw new Error("Too Many Requests")
+        }
+
         if (!res.ok) throw new Error(`Failed to fetch reports: ${res.status} ${res.statusText}`)
 
         const text = await res.text()
@@ -169,17 +174,29 @@ export function ReportsTable({ year, period }: ReportsTableProps) {
       }
     }
 
-    fetchReports()
+    // Debounce fetch
+    const timeoutId = setTimeout(() => {
+      fetchReports()
+    }, 500)
+
+    // Initial fetch for auto-refresh logic (only if not debounced/filtered)
+    // Actually, we should just let the debounce handle the initial load too to be consistent.
+    // But for the interval, we need to handle it separately or just let the user refresh manually?
+    // The original code had an interval. Let's keep it but make sure it doesn't conflict.
+    // If we use setTimeout for the main fetch, the interval might be tricky.
+    // Let's simplify: The interval was only for page 1 and no search.
+
+    let intervalId: NodeJS.Timeout
 
     if (page === 1 && debouncedSearch === "") {
-      const interval = setInterval(fetchReports, 30000)
-      return () => {
-        controller.abort()
-        clearInterval(interval)
-      }
+      intervalId = setInterval(fetchReports, 30000)
     }
 
-    return () => controller.abort()
+    return () => {
+      controller.abort()
+      clearTimeout(timeoutId)
+      if (intervalId) clearInterval(intervalId)
+    }
   }, [year, period, category, page, debouncedSearch])
 
   React.useEffect(() => {
