@@ -12,7 +12,7 @@ import { DashboardCharts, ChartsData } from "@/components/dashboard/charts"
 import { ReportsTable } from "@/components/dashboard/reports-table"
 import { useState, useEffect } from "react"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ""
 
 export default function DashboardPage() {
   const [year, setYear] = useState("2025")
